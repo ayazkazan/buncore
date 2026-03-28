@@ -1,7 +1,7 @@
 .{
+    .name = "buncore",
     .version = "0.1.5",
-    .fingerprint = 0x6dc8675d7c55ff62,
-    .minimum_zig_version = "0.14.1",
+    .minimum_zig_version = "0.13.0",
     .dependencies = .{},
     .paths = .{
         "build.zig",
