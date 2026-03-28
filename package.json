@@ -1,5 +1,5 @@
 {
-  "name": "buncore",
+  "name": "buncore-cli",
   "version": "0.1.5",
   "description": "Bun Process Manager — a fast, zero-dependency process manager built in Zig for Bun workloads",
   "type": "module",

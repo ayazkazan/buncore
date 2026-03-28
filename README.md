@@ -5,7 +5,7 @@ A modern, Bun-optimized process manager with production-ready features.
 ## Installation
 
 ```bash
-npm install -g buncore
+npm install -g buncore-cli
 ```
 
 After installation, use the `buncore` command:
@@ -188,7 +188,7 @@ buncore web
 
 - **Repository**: https://github.com/ayazkazan/buncore
 - **Issues**: https://github.com/ayazkazan/buncore/issues
-- **NPM Package**: https://www.npmjs.com/package/buncore
+- **NPM Package**: https://www.npmjs.com/package/buncore-cli
 
 ## License
 
