@@ -1,15 +1,15 @@
 {
   "name": "bpm2-cli",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "Bun Process Manager — a fast, zero-dependency process manager built in Zig for Bun workloads",
   "type": "module",
   "bin": {
-    "bpm2": "./bin/bpm2.js"
+    "bpm2": "bin/bpm2"
   },
   "scripts": {
     "build": "zig build -Doptimize=ReleaseFast",
     "test": "zig build test",
-    "postinstall": "node scripts/postinstall.js",
+    "postinstall": "node scripts/postinstall.cjs",
     "agent:fixture": "bun run fixtures/test-app.ts",
     "smoke": "bash ./smoke.sh",
     "smoke:windows": "powershell -ExecutionPolicy Bypass -File .\\smoke.ps1",
