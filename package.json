@@ -1,6 +1,6 @@
 {
   "name": "bpm2-cli",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Bun Process Manager — a fast, zero-dependency process manager built in Zig for Bun workloads",
   "type": "module",
   "bin": {

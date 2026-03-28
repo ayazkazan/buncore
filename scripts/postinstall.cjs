@@ -4,11 +4,7 @@ const http = require("http");
 const path = require("path");
 const fs = require("fs");
 const { createGunzip } = require("zlib");
-const { pipeline } = require("stream");
-const { promisify } = require("util");
-const tar = require("./tar-extract.js");
 
-const pipelineAsync = promisify(pipeline);
 const root = path.resolve(__dirname, "..");
 const pkg = require(path.join(root, "package.json"));
 const version = pkg.version;
