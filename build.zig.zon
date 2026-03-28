@@ -11,7 +11,10 @@
         "agent",
         "web",
         "fixtures",
+        "bin",
+        "scripts",
         "package.json",
         "README.md",
+        "LICENSE",
     },
 }
