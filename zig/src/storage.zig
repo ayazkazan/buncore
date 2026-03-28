@@ -15,7 +15,7 @@ pub const Storage = struct {
         const home = std.process.getEnvVarOwned(allocator, "HOME") catch try allocator.dupe(u8, ".");
         errdefer allocator.free(home);
 
-        const root = try std.fs.path.join(allocator, &.{ home, ".bpm2" });
+        const root = try std.fs.path.join(allocator, &.{ home, ".buncore" });
         errdefer allocator.free(root);
         const logs = try std.fs.path.join(allocator, &.{ root, "logs" });
         errdefer allocator.free(logs);

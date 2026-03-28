@@ -10,8 +10,8 @@ node_modules/
 Thumbs.db
 *:Zone.Identifier
 
-# BPM2 runtime
-~/.bpm2/
+# Buncore runtime
+~/.buncore/
 
 # IDE
 .vscode/

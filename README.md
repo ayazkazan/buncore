@@ -1,51 +1,51 @@
-# bpm2-cli - Modern Process Manager for Bun
+# buncore - Modern Process Manager for Bun
 
 A modern, Bun-optimized process manager with production-ready features.
 
 ## Installation
 
 ```bash
-npm install -g bpm2-cli
+npm install -g buncore
 ```
 
-After installation, use the `bpm2` command:
+After installation, use the `buncore` command:
 
 ```bash
-bpm2 start app.ts --name api
-bpm2 list
-bpm2 stop api
+buncore start app.ts --name api
+buncore list
+buncore stop api
 ```
 
 ## Quick Start
 
 ```bash
 # Start a TypeScript application
-bpm2 start server.ts --name api --instances 4
+buncore start server.ts --name api --instances 4
 
 # Start with environment variables
-bpm2 start app.ts --name web --env production
+buncore start app.ts --name web --env production
 
 # Start from ecosystem file
-bpm2 start ecosystem.config.js
+buncore start ecosystem.config.js
 
 # Monitor processes
-bpm2 list
-bpm2 info api
+buncore list
+buncore info api
 
 # Manage processes
-bpm2 restart api
-bpm2 stop api
-bpm2 delete api
+buncore restart api
+buncore stop api
+buncore delete api
 ```
 
 ## Feature Comparison with PM2
 
-| Feature | bpm2-cli | PM2 | Notes |
+| Feature | buncore | PM2 | Notes |
 |---------|----------|-----|-------|
 | **Core Process Management** | ✅ | ✅ | Start/stop/restart/delete |
-| **Load Balancing** | ✅ Cluster mode with SO_REUSEPORT | ✅ Cluster mode | bpm2 uses modern OS-level load balancing |
+| **Load Balancing** | ✅ Cluster mode with SO_REUSEPORT | ✅ Cluster mode | buncore uses modern OS-level load balancing |
 | **Hot Reload** | ✅ Zero-downtime graceful reload | ✅ Graceful reload | |
-| **Auto-restart** | ✅ With exponential backoff | ✅ | bmp2 has smarter backoff strategy |
+| **Auto-restart** | ✅ With exponential backoff | ✅ | buncore has smarter backoff strategy |
 | **Log Management** | ✅ Separate stdout/stderr + rotation | ✅ | |
 | **Ecosystem Config** | ✅ JS/JSON support | ✅ | Compatible format |
 | **Environment Management** | ✅ Named env switching | ✅ | |
@@ -55,8 +55,8 @@ bpm2 delete api
 | **Cron Jobs** | ✅ Built-in cron restart | ❌ | |
 | **Container Support** | ✅ `--no-daemon` mode | ❌ | Better for Docker/K8s |
 | **Signal Handling** | ✅ Custom signal sending | ✅ | |
-| **Runtime Scaling** | ✅ `bpm2 scale app 8` | ✅ | |
-| **TypeScript Native** | ✅ Built for Bun/Deno | ⚠️ Requires transpilation | bpm2 runs TS directly |
+| **Runtime Scaling** | ✅ `buncore scale app 8` | ✅ | |
+| **TypeScript Native** | ✅ Built for Bun/Deno | ⚠️ Requires transpilation | buncore runs TS directly |
 | **Modern Runtime** | ✅ Zig + Node.js | ⚠️ Node.js only | Better performance |
 | **JSON API** | ✅ `--json` output | ✅ | |
 | **Web Dashboard** | ✅ Built-in | ✅ PM2 Plus (separate) | |
@@ -66,37 +66,37 @@ bpm2 delete api
 ### Cluster Mode with SO_REUSEPORT
 ```bash
 # OS-level load balancing (Linux/macOS)
-bpm2 start app.ts --name api --exec-mode cluster --instances 4
+buncore start app.ts --name api --exec-mode cluster --instances 4
 ```
 
 ### Graceful Reload (Zero Downtime)
 ```bash
 # Rolling restart without dropping connections
-bpm2 reload api
+buncore reload api
 ```
 
 ### Separate Log Files
 ```bash
 # Split stdout and stderr
-bpm2 start app.ts --name api --out-file app.out.log --error-file app.err.log
+buncore start app.ts --name api --out-file app.out.log --error-file app.err.log
 ```
 
 ### Exponential Backoff
 ```bash
 # Smart restart delays: 100ms → 200ms → 400ms → ... → 15s
-bpm2 start unstable-app.ts --exp-backoff-restart-delay 100
+buncore start unstable-app.ts --exp-backoff-restart-delay 100
 ```
 
 ### Container Mode
 ```bash
 # Run without daemon (Docker/K8s friendly)
-bpm2 start app.ts --no-daemon
+buncore start app.ts --no-daemon
 ```
 
 ### Cron Restart
 ```bash
 # Daily restart at midnight
-bpm2 start app.ts --cron-restart "0 0 * * *"
+buncore start app.ts --cron-restart "0 0 * * *"
 ```
 
 ## Ecosystem Configuration
@@ -133,39 +133,39 @@ module.exports = {
 
 ```bash
 # Start built-in monitoring dashboard
-bpm2 web
+buncore web
 # Open http://localhost:9615
 ```
 
 ## Commands
 
 ### Process Management
-- `bpm2 start <script>` - Start application
-- `bpm2 restart <name|id|all>` - Restart processes
-- `bpm2 reload <name|id|all>` - Graceful reload (zero-downtime)
-- `bpm2 stop <name|id|all>` - Stop processes
-- `bpm2 delete <name|id|all>` - Delete processes
-- `bpm2 kill` - Kill daemon and all processes
+- `buncore start <script>` - Start application
+- `buncore restart <name|id|all>` - Restart processes
+- `buncore reload <name|id|all>` - Graceful reload (zero-downtime)
+- `buncore stop <name|id|all>` - Stop processes
+- `buncore delete <name|id|all>` - Delete processes
+- `buncore kill` - Kill daemon and all processes
 
 ### Monitoring
-- `bpm2 list` - List all processes
-- `bpm2 info <name|id>` - Detailed process information
-- `bpm2 logs <name|id>` - Show logs
-- `bpm2 web` - Web-based monitoring dashboard
+- `buncore list` - List all processes
+- `buncore info <name|id>` - Detailed process information
+- `buncore logs <name|id>` - Show logs
+- `buncore web` - Web-based monitoring dashboard
 
 ### Scaling & Management
-- `bpm2 scale <name> <number>` - Scale instances
-- `bpm2 reset <name|all>` - Reset restart counters
-- `bpm2 signal <signal> <name|id>` - Send custom signal
+- `buncore scale <name> <number>` - Scale instances
+- `buncore reset <name|all>` - Reset restart counters
+- `buncore signal <signal> <name|id>` - Send custom signal
 
 ### Configuration
-- `bpm2 startup` - Generate startup script
-- `bpm2 unstartup` - Remove startup script
-- `bpm2 save` - Save current process list
-- `bpm2 resurrect` - Restore saved processes
-- `bpm2 dump` - Dump process configuration
+- `buncore startup` - Generate startup script
+- `buncore unstartup` - Remove startup script
+- `buncore save` - Save current process list
+- `buncore resurrect` - Restore saved processes
+- `buncore dump` - Dump process configuration
 
-## Why bpm2-cli?
+## Why buncore?
 
 ### ✨ Modern Runtime Support
 - **Native TypeScript**: Run `.ts` files directly with Bun/Deno
@@ -186,9 +186,9 @@ bpm2 web
 
 ## GitHub & Issues
 
-- **Repository**: https://github.com/ayazkazan/bpm2
-- **Issues**: https://github.com/ayazkazan/bpm2/issues
-- **NPM Package**: https://www.npmjs.com/package/bpm2-cli
+- **Repository**: https://github.com/ayazkazan/buncore
+- **Issues**: https://github.com/ayazkazan/buncore/issues
+- **NPM Package**: https://www.npmjs.com/package/buncore
 
 ## License
 

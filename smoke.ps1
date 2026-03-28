@@ -12,7 +12,7 @@ function Get-Binary([string]$name) {
 
 function Cleanup-Processes {
   $patterns = @(
-    [regex]::Escape((Join-Path $root "zig-out/bin/bpm2d")),
+    [regex]::Escape((Join-Path $root "zig-out/bin/buncored")),
     [regex]::Escape((Join-Path $root "fixtures/test-app.ts")),
     [regex]::Escape((Join-Path $root "fixtures/worker.ts")),
     "fixtures/test-app.ts",
@@ -33,13 +33,13 @@ function Cleanup-Processes {
   }
 }
 
-function Invoke-Bpm2([string[]]$args) {
-  $bpm2 = Get-Binary "bpm2"
-  & $bpm2 @args
+function Invoke-Buncore([string[]]$args) {
+  $buncore = Get-Binary "buncore"
+  & $buncore @args
 }
 
 function Get-ProcessPid([string]$name) {
-  $output = Invoke-Bpm2 @("info", $name) 2>&1 | Out-String
+  $output = Invoke-Buncore @("info", $name) 2>&1 | Out-String
   $match = [regex]::Match($output, "PID:\s+(\d+)")
   if (-not $match.Success) {
     throw "Could not read PID for $name"
@@ -47,32 +47,32 @@ function Get-ProcessPid([string]$name) {
   return $match.Groups[1].Value
 }
 
-try { Invoke-Bpm2 @("kill") | Out-Null } catch {}
+try { Invoke-Buncore @("kill") | Out-Null } catch {}
 Cleanup-Processes
-Remove-Item "$HOME\.bpm2\daemon.json","$HOME\.bpm2\state.json" -ErrorAction SilentlyContinue
+Remove-Item "$HOME\.buncore\daemon.json","$HOME\.buncore\state.json" -ErrorAction SilentlyContinue
 
 Write-Host "[smoke] build"
 zig build | Out-Null
 
 Write-Host "[smoke] start worker instances"
-Invoke-Bpm2 @("start", "fixtures/worker.ts", "--name", "worker", "--instances", "2") | Out-Null
+Invoke-Buncore @("start", "fixtures/worker.ts", "--name", "worker", "--instances", "2") | Out-Null
 Start-Sleep -Seconds 2
-Invoke-Bpm2 @("list")
+Invoke-Buncore @("list")
 
 Write-Host "[smoke] all-target operations"
-Invoke-Bpm2 @("restart", "all") | Out-Null
+Invoke-Buncore @("restart", "all") | Out-Null
 Start-Sleep -Seconds 2
-Invoke-Bpm2 @("flush", "all") | Out-Null
+Invoke-Buncore @("flush", "all") | Out-Null
 
 Write-Host "[smoke] save/stop/resurrect"
-Invoke-Bpm2 @("save") | Out-Null
-Invoke-Bpm2 @("stop", "worker-0") | Out-Null
-Invoke-Bpm2 @("resurrect") | Out-Null
+Invoke-Buncore @("save") | Out-Null
+Invoke-Buncore @("stop", "worker-0") | Out-Null
+Invoke-Buncore @("resurrect") | Out-Null
 Start-Sleep -Seconds 2
-Invoke-Bpm2 @("list")
+Invoke-Buncore @("list")
 
 Write-Host "[smoke] watch restart"
-Invoke-Bpm2 @("start", "fixtures/test-app.ts", "--name", "watch-app", "--watch", "--watch-path", "fixtures") | Out-Null
+Invoke-Buncore @("start", "fixtures/test-app.ts", "--name", "watch-app", "--watch", "--watch-path", "fixtures") | Out-Null
 Start-Sleep -Seconds 2
 $before = Get-ProcessPid "watch-app"
 (Get-Item "fixtures/test-app.ts").LastWriteTime = Get-Date
@@ -83,21 +83,21 @@ if ($before -eq $after) {
 }
 
 Write-Host "[smoke] heap/profile"
-Invoke-Bpm2 @("heap", "watch-app") | Out-Null
-Invoke-Bpm2 @("heap-analyze", "watch-app") | Out-Null
-Invoke-Bpm2 @("profile", "watch-app", "--duration", "1") | Out-Null
+Invoke-Buncore @("heap", "watch-app") | Out-Null
+Invoke-Buncore @("heap-analyze", "watch-app") | Out-Null
+Invoke-Buncore @("profile", "watch-app", "--duration", "1") | Out-Null
 
 Write-Host "[smoke] dashboard"
-Invoke-Bpm2 @("dashboard")
+Invoke-Buncore @("dashboard")
 Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:9716/api/processes" | Out-Null
 
 Write-Host "[smoke] shutdown"
-Invoke-Bpm2 @("kill") | Out-Null
+Invoke-Buncore @("kill") | Out-Null
 Start-Sleep -Seconds 1
 Cleanup-Processes
 
 $leftovers = Get-CimInstance Win32_Process | Where-Object {
-  $_.CommandLine -and ($_.CommandLine -match "bpm2d|fixtures/test-app.ts|fixtures/worker.ts")
+  $_.CommandLine -and ($_.CommandLine -match "buncored|fixtures/test-app.ts|fixtures/worker.ts")
 }
 if ($leftovers) {
   throw "process cleanup failed"

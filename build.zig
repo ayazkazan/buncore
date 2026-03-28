@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const cli = b.addExecutable(.{
-        .name = "bpm2",
+        .name = "buncore",
         .root_source_file = b.path("zig/src/cli.zig"),
         .target = target,
         .optimize = optimize,
@@ -22,7 +22,7 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(cli);
 
     const daemon = b.addExecutable(.{
-        .name = "bpm2d",
+        .name = "buncored",
         .root_source_file = b.path("zig/src/daemon.zig"),
         .target = target,
         .optimize = optimize,
@@ -40,7 +40,7 @@ pub fn build(b: *std.Build) void {
 
     const run_cli = b.addRunArtifact(cli);
     if (b.args) |args| run_cli.addArgs(args);
-    const run_step = b.step("run", "Run bpm2 CLI");
+    const run_step = b.step("run", "Run buncore CLI");
     run_step.dependOn(&run_cli.step);
 
     const test_step = b.step("test", "Run zig tests");

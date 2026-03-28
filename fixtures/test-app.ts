@@ -26,7 +26,7 @@ const server = Bun.serve({
       return Response.json({ retained: heap.length });
     }
 
-    return new Response(`bpm2 fixture pid=${process.pid}\n`);
+    return new Response(`buncore fixture pid=${process.pid}\n`);
   },
 });
 

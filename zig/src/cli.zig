@@ -59,7 +59,7 @@ fn writeCommandEntry(writer: anytype, syntax: []const u8, description: []const u
 }
 
 fn writeHelp(writer: anytype) !void {
-    try writeHero(writer, "BPM2 CONTROL SURFACE", "Independent Zig process manager for Bun workloads");
+    try writeHero(writer, "BUNCORE CONTROL SURFACE", "Independent Zig process manager for Bun workloads");
     try writer.writeByte('\n');
     try render.writePill(writer, render.BOLD_GREEN, "Launch");
     try writer.writeByte(' ');
@@ -71,42 +71,42 @@ fn writeHelp(writer: anytype) !void {
     try writer.writeByte('\n');
 
     try writeSectionTitle(writer, "Lifecycle");
-    try writeCommandEntry(writer, "bpm2 start <script|config> [--name <name>] [--watch]", "Launch a script, JSON/JSONC manifest, or ecosystem config");
-    try writeCommandEntry(writer, "bpm2 stop <name|id|all>", "Gracefully stop one process, a group, or the full fleet");
-    try writeCommandEntry(writer, "bpm2 restart <name|id|all>", "Restart matching processes without losing daemon state");
-    try writeCommandEntry(writer, "bpm2 reload <name|id|all>", "Graceful rolling reload with zero-downtime instance replacement");
-    try writeCommandEntry(writer, "bpm2 delete <name|id|all>", "Remove processes from management after stopping them");
-    try writeCommandEntry(writer, "bpm2 flush [name|id|all]", "Clear combined log files for the selected process scope");
-    try writeCommandEntry(writer, "bpm2 scale <name> <count>", "Dynamically scale instances up or down at runtime");
-    try writeCommandEntry(writer, "bpm2 signal <signal> <name|id>", "Send a signal (SIGUSR1, SIGUSR2, etc.) to a process");
-    try writeCommandEntry(writer, "bpm2 reset <name|id|all>", "Reset restart counters and backoff state");
+    try writeCommandEntry(writer, "buncore start <script|config> [--name <name>] [--watch]", "Launch a script, JSON/JSONC manifest, or ecosystem config");
+    try writeCommandEntry(writer, "buncore stop <name|id|all>", "Gracefully stop one process, a group, or the full fleet");
+    try writeCommandEntry(writer, "buncore restart <name|id|all>", "Restart matching processes without losing daemon state");
+    try writeCommandEntry(writer, "buncore reload <name|id|all>", "Graceful rolling reload with zero-downtime instance replacement");
+    try writeCommandEntry(writer, "buncore delete <name|id|all>", "Remove processes from management after stopping them");
+    try writeCommandEntry(writer, "buncore flush [name|id|all]", "Clear combined log files for the selected process scope");
+    try writeCommandEntry(writer, "buncore scale <name> <count>", "Dynamically scale instances up or down at runtime");
+    try writeCommandEntry(writer, "buncore signal <signal> <name|id>", "Send a signal (SIGUSR1, SIGUSR2, etc.) to a process");
+    try writeCommandEntry(writer, "buncore reset <name|id|all>", "Reset restart counters and backoff state");
 
     try writeSectionTitle(writer, "Fleet Views");
-    try writeCommandEntry(writer, "bpm2 list", "Snapshot table with status, CPU, RAM, heap, and restart pressure");
-    try writeCommandEntry(writer, "bpm2 monit", "Live terminal monitor that refreshes every second");
-    try writeCommandEntry(writer, "bpm2 info <name|id>", "Detailed runtime, lifecycle, and watcher diagnostics");
-    try writeCommandEntry(writer, "bpm2 logs <name|id> [--lines <n>] [--follow]", "Structured stdout/stderr tail with stream labels");
-    try writeCommandEntry(writer, "bpm2 dashboard", "Print the web dashboard URL and monitoring API endpoints");
+    try writeCommandEntry(writer, "buncore list", "Snapshot table with status, CPU, RAM, heap, and restart pressure");
+    try writeCommandEntry(writer, "buncore monit", "Live terminal monitor that refreshes every second");
+    try writeCommandEntry(writer, "buncore info <name|id>", "Detailed runtime, lifecycle, and watcher diagnostics");
+    try writeCommandEntry(writer, "buncore logs <name|id> [--lines <n>] [--follow]", "Structured stdout/stderr tail with stream labels");
+    try writeCommandEntry(writer, "buncore dashboard", "Print the web dashboard URL and monitoring API endpoints");
 
     try writeSectionTitle(writer, "Diagnostics");
-    try writeCommandEntry(writer, "bpm2 heap <name|id> [--jsc]", "Capture a heap snapshot through the Bun preload agent");
-    try writeCommandEntry(writer, "bpm2 heap-analyze <name|id> [--jsc]", "Run heap analysis and print artifact metadata");
-    try writeCommandEntry(writer, "bpm2 profile <name|id> [--duration <seconds>]", "Capture a CPU profile for the selected process");
-    try writeCommandEntry(writer, "bpm2 ping", "Verify that the daemon control plane is reachable");
+    try writeCommandEntry(writer, "buncore heap <name|id> [--jsc]", "Capture a heap snapshot through the Bun preload agent");
+    try writeCommandEntry(writer, "buncore heap-analyze <name|id> [--jsc]", "Run heap analysis and print artifact metadata");
+    try writeCommandEntry(writer, "buncore profile <name|id> [--duration <seconds>]", "Capture a CPU profile for the selected process");
+    try writeCommandEntry(writer, "buncore ping", "Verify that the daemon control plane is reachable");
 
     try writeSectionTitle(writer, "Persistence");
-    try writeCommandEntry(writer, "bpm2 save", "Save the current managed fleet to ~/.bpm2/state.json");
-    try writeCommandEntry(writer, "bpm2 resurrect", "Restore the last saved fleet from ~/.bpm2/state.json");
-    try writeCommandEntry(writer, "bpm2 startup", "Generate a system boot script so saved fleet auto-starts");
-    try writeCommandEntry(writer, "bpm2 unstartup", "Remove the system boot script created by startup");
-    try writeCommandEntry(writer, "bpm2 kill", "Stop managed processes and shut the daemon down");
-    try writeCommandEntry(writer, "bpm2 update", "Seamless daemon update: save, kill, respawn, resurrect");
-    try writeCommandEntry(writer, "bpm2 ecosystem", "Generate an ecosystem.config.ts starter template");
+    try writeCommandEntry(writer, "buncore save", "Save the current managed fleet to ~/.buncore/state.json");
+    try writeCommandEntry(writer, "buncore resurrect", "Restore the last saved fleet from ~/.buncore/state.json");
+    try writeCommandEntry(writer, "buncore startup", "Generate a system boot script so saved fleet auto-starts");
+    try writeCommandEntry(writer, "buncore unstartup", "Remove the system boot script created by startup");
+    try writeCommandEntry(writer, "buncore kill", "Stop managed processes and shut the daemon down");
+    try writeCommandEntry(writer, "buncore update", "Seamless daemon update: save, kill, respawn, resurrect");
+    try writeCommandEntry(writer, "buncore ecosystem", "Generate an ecosystem.config.ts starter template");
 
     try writeSectionTitle(writer, "Examples");
-    try writeCommandEntry(writer, "bpm2 start fixtures/test-app.ts --name api --watch", "Launch the sample app with automatic restart on file changes");
-    try writeCommandEntry(writer, "bpm2 logs api --lines 200 --follow", "Tail the last 200 lines and stay attached to the stream");
-    try writeCommandEntry(writer, "bpm2 profile api --duration 15", "Capture a 15-second CPU profile for later analysis");
+    try writeCommandEntry(writer, "buncore start fixtures/test-app.ts --name api --watch", "Launch the sample app with automatic restart on file changes");
+    try writeCommandEntry(writer, "buncore logs api --lines 200 --follow", "Tail the last 200 lines and stay attached to the stream");
+    try writeCommandEntry(writer, "buncore profile api --duration 15", "Capture a 15-second CPU profile for later analysis");
 }
 
 fn printHelp() !void {
@@ -161,7 +161,7 @@ fn daemonBinaryPath(allocator: Allocator) ![]u8 {
     const exe = try std.fs.selfExePathAlloc(allocator);
     defer allocator.free(exe);
     const dir = std.fs.path.dirname(exe) orelse return error.FileNotFound;
-    return std.fs.path.join(allocator, &.{ dir, "bpm2d" });
+    return std.fs.path.join(allocator, &.{ dir, "buncored" });
 }
 
 fn ensureDaemon(allocator: Allocator, storage: storage_mod.Storage) !void {
@@ -526,21 +526,21 @@ fn writeProcessTableRow(allocator: Allocator, writer: anytype, item: std.json.Va
 fn printEmptyFleet(mode: TableMode) !void {
     const out = stdoutWriter();
     if (mode == .monitor) {
-        try writeHero(out, "BPM2 LIVE MONITOR", "Terminal fleet view with per-second refresh");
+        try writeHero(out, "BUNCORE LIVE MONITOR", "Terminal fleet view with per-second refresh");
     } else {
-        try writeHero(out, "BPM2 FLEET SNAPSHOT", "Process inventory and runtime pressure overview");
+        try writeHero(out, "BUNCORE FLEET SNAPSHOT", "Process inventory and runtime pressure overview");
     }
     try out.writeByte('\n');
     try render.writeWarning(out, "No processes are being managed right now.");
-    try render.writeInfoMsg(out, "Launch one with: bpm2 start <script> --name api");
+    try render.writeInfoMsg(out, "Launch one with: buncore start <script> --name api");
 }
 
 fn printFleetSummary(allocator: Allocator, processes: []const std.json.Value, mode: TableMode) !void {
     const out = stdoutWriter();
     if (mode == .monitor) {
-        try writeHero(out, "BPM2 LIVE MONITOR", "Terminal fleet view with per-second refresh");
+        try writeHero(out, "BUNCORE LIVE MONITOR", "Terminal fleet view with per-second refresh");
     } else {
-        try writeHero(out, "BPM2 FLEET SNAPSHOT", "Process inventory and runtime pressure overview");
+        try writeHero(out, "BUNCORE FLEET SNAPSHOT", "Process inventory and runtime pressure overview");
     }
     try out.writeByte('\n');
 
@@ -695,7 +695,7 @@ fn printInfo(allocator: Allocator, response: Response) !void {
     } else null, "N/A");
     defer allocator.free(jsc_object_count_text);
 
-    try writeHero(out, "BPM2 PROCESS PROFILE", hero_name);
+    try writeHero(out, "BUNCORE PROCESS PROFILE", hero_name);
     try out.writeByte('\n');
 
     const status_pill = try std.fmt.allocPrint(allocator, "Status {s}", .{status});
@@ -766,7 +766,7 @@ fn printActionResult(command: []const u8, target: []const u8, response: Response
 
 fn printLogsHeader(allocator: Allocator, target: []const u8, lines: []const u8, follow: bool, path: []const u8) !void {
     const out = stdoutWriter();
-    try writeHero(out, "BPM2 LOG STREAM", "Structured stdout and stderr tail for managed processes");
+    try writeHero(out, "BUNCORE LOG STREAM", "Structured stdout and stderr tail for managed processes");
     try out.writeByte('\n');
 
     const target_pill = try std.fmt.allocPrint(allocator, "Target {s}", .{target});
@@ -973,7 +973,7 @@ fn writeEcosystemTemplate() !void {
         ,
     });
     try render.writeSuccess(stdoutWriter(), "Created ecosystem.config.ts");
-    try render.writeInfoMsg(stdoutWriter(), "Edit the template and run: bpm2 start ecosystem.config.ts");
+    try render.writeInfoMsg(stdoutWriter(), "Edit the template and run: buncore start ecosystem.config.ts");
 }
 
 fn generateStartupScript(allocator: Allocator, storage: storage_mod.Storage) !void {
@@ -990,8 +990,8 @@ fn generateStartupScript(allocator: Allocator, storage: storage_mod.Storage) !vo
 
         const unit_content = try std.fmt.allocPrint(allocator,
             \\[Unit]
-            \\Description=BPM2 process manager
-            \\Documentation=https://github.com/bpm2
+            \\Description=BUNCORE process manager
+            \\Documentation=https://github.com/ayazkazan/buncore
             \\After=network.target
             \\
             \\[Service]
@@ -1009,18 +1009,18 @@ fn generateStartupScript(allocator: Allocator, storage: storage_mod.Storage) !vo
         , .{ user_env, home_env, exe_path, exe_path });
         defer allocator.free(unit_content);
 
-        const service_path = "/etc/systemd/system/bpm2.service";
+        const service_path = "/etc/systemd/system/buncore.service";
         std.fs.cwd().writeFile(.{ .sub_path = service_path, .data = unit_content }) catch |err| {
             try render.writeErrorFmt(stderrWriter(), "Failed to write {s}: {s}. Try running with sudo.", .{ service_path, @errorName(err) });
             return error.InvalidArgument;
         };
 
-        try render.writeSuccess(out, "systemd service created at /etc/systemd/system/bpm2.service");
+        try render.writeSuccess(out, "systemd service created at /etc/systemd/system/buncore.service");
         try render.writeInfoMsg(out, "Run the following commands to enable:");
         try render.writeInfoFmt(out, "  sudo systemctl daemon-reload", .{});
-        try render.writeInfoFmt(out, "  sudo systemctl enable bpm2", .{});
-        try render.writeInfoFmt(out, "  sudo systemctl start bpm2", .{});
-        try render.writeInfoMsg(out, "Make sure to run 'bpm2 save' before rebooting.");
+        try render.writeInfoFmt(out, "  sudo systemctl enable buncore", .{});
+        try render.writeInfoFmt(out, "  sudo systemctl start buncore", .{});
+        try render.writeInfoMsg(out, "Make sure to run 'buncore save' before rebooting.");
     } else if (builtin_os == .macos) {
         const home_env = std.process.getEnvVarOwned(allocator, "HOME") catch try allocator.dupe(u8, "/Users/unknown");
         defer allocator.free(home_env);
@@ -1031,7 +1031,7 @@ fn generateStartupScript(allocator: Allocator, storage: storage_mod.Storage) !vo
             \\<plist version="1.0">
             \\<dict>
             \\  <key>Label</key>
-            \\  <string>com.bpm2.agent</string>
+            \\  <string>com.buncore.agent</string>
             \\  <key>ProgramArguments</key>
             \\  <array>
             \\    <string>{s}</string>
@@ -1047,16 +1047,16 @@ fn generateStartupScript(allocator: Allocator, storage: storage_mod.Storage) !vo
             \\    <string>{s}</string>
             \\  </dict>
             \\  <key>StandardOutPath</key>
-            \\  <string>{s}/.bpm2/startup.log</string>
+            \\  <string>{s}/.buncore/startup.log</string>
             \\  <key>StandardErrorPath</key>
-            \\  <string>{s}/.bpm2/startup.log</string>
+            \\  <string>{s}/.buncore/startup.log</string>
             \\</dict>
             \\</plist>
             \\
         , .{ exe_path, home_env, home_env, home_env });
         defer allocator.free(plist_content);
 
-        const plist_path = try std.fmt.allocPrint(allocator, "{s}/Library/LaunchAgents/com.bpm2.agent.plist", .{home_env});
+        const plist_path = try std.fmt.allocPrint(allocator, "{s}/Library/LaunchAgents/com.buncore.agent.plist", .{home_env});
         defer allocator.free(plist_path);
 
         std.fs.cwd().writeFile(.{ .sub_path = plist_path, .data = plist_content }) catch |err| {
@@ -1067,7 +1067,7 @@ fn generateStartupScript(allocator: Allocator, storage: storage_mod.Storage) !vo
         try render.writeSuccess(out, "launchd plist created.");
         try render.writeInfoFmt(out, "Plist: {s}", .{plist_path});
         try render.writeInfoMsg(out, "Run to activate: launchctl load <plist_path>");
-        try render.writeInfoMsg(out, "Make sure to run 'bpm2 save' before rebooting.");
+        try render.writeInfoMsg(out, "Make sure to run 'buncore save' before rebooting.");
     } else {
         try render.writeWarning(out, "Startup script generation is not supported on this platform.");
         try render.writeInfoMsg(out, "Supported platforms: Linux (systemd), macOS (launchd).");
@@ -1080,7 +1080,7 @@ fn removeStartupScript(allocator: Allocator) !void {
     const builtin_os = @import("builtin").os.tag;
 
     if (builtin_os == .linux) {
-        std.fs.cwd().deleteFile("/etc/systemd/system/bpm2.service") catch |err| {
+        std.fs.cwd().deleteFile("/etc/systemd/system/buncore.service") catch |err| {
             try render.writeErrorFmt(stderrWriter(), "Failed to remove service file: {s}. Try running with sudo.", .{@errorName(err)});
             return error.InvalidArgument;
         };
@@ -1089,7 +1089,7 @@ fn removeStartupScript(allocator: Allocator) !void {
     } else if (builtin_os == .macos) {
         const home_env = std.process.getEnvVarOwned(allocator, "HOME") catch try allocator.dupe(u8, "/Users/unknown");
         defer allocator.free(home_env);
-        const plist_path = try std.fmt.allocPrint(allocator, "{s}/Library/LaunchAgents/com.bpm2.agent.plist", .{home_env});
+        const plist_path = try std.fmt.allocPrint(allocator, "{s}/Library/LaunchAgents/com.buncore.agent.plist", .{home_env});
         defer allocator.free(plist_path);
         std.fs.cwd().deleteFile(plist_path) catch |err| {
             try render.writeErrorFmt(stderrWriter(), "Failed to remove plist: {s}", .{@errorName(err)});
@@ -1108,7 +1108,7 @@ fn printDashboardInfo(allocator: Allocator, host: []const u8, dashboard_port: u1
     const api_url = try std.fmt.allocPrint(allocator, "{s}/api/processes", .{url});
     defer allocator.free(api_url);
 
-    try writeHero(out, "BPM2 DASHBOARD READY", "Open the web control room for live fleet visibility");
+    try writeHero(out, "BUNCORE DASHBOARD READY", "Open the web control room for live fleet visibility");
     try out.writeByte('\n');
     try render.writePill(out, render.BOLD_CYAN, "Dashboard URL");
     try out.writeByte(' ');
@@ -1124,14 +1124,14 @@ fn printDashboardInfo(allocator: Allocator, host: []const u8, dashboard_port: u1
 
 fn printArtifactResult(command: []const u8, value: std.json.Value) !void {
     if (std.mem.eql(u8, command, "heap")) {
-        try printJsonPanel("BPM2 HEAP SNAPSHOT", "Raw artifact metadata and snapshot paths", value);
+        try printJsonPanel("BUNCORE HEAP SNAPSHOT", "Raw artifact metadata and snapshot paths", value);
         return;
     }
     if (std.mem.eql(u8, command, "heap-analyze")) {
-        try printJsonPanel("BPM2 HEAP ANALYSIS", "Analysis summary and generated output paths", value);
+        try printJsonPanel("BUNCORE HEAP ANALYSIS", "Analysis summary and generated output paths", value);
         return;
     }
-    try printJsonPanel("BPM2 CPU PROFILE", "Profiler artifact metadata and capture summary", value);
+    try printJsonPanel("BUNCORE CPU PROFILE", "Profiler artifact metadata and capture summary", value);
 }
 
 fn printMaintenanceResult(storage: storage_mod.Storage, command: []const u8) !void {
@@ -1213,7 +1213,7 @@ fn run() !void {
     }
 
     if (std.mem.eql(u8, command, "start")) {
-        if (args.len < 3) return fail("Usage: bpm2 start <script|config> [options]");
+        if (args.len < 3) return fail("Usage: buncore start <script|config> [options]");
         const target = args[2];
         if (std.mem.endsWith(u8, target, ".ts") and std.mem.indexOf(u8, target, "ecosystem") != null or std.mem.endsWith(u8, target, ".js") or std.mem.endsWith(u8, target, ".json") or std.mem.endsWith(u8, target, ".jsonc")) {
             const env_name = flagValue(args[2..], "--env", null);
@@ -1243,7 +1243,7 @@ fn run() !void {
     }
 
     if (std.mem.eql(u8, command, "info")) {
-        if (args.len < 3) return fail("Usage: bpm2 info <name|id>");
+        if (args.len < 3) return fail("Usage: buncore info <name|id>");
         const payload = try std.fmt.allocPrint(allocator, "{{\"target\":{s}}}", .{try jsonStringAlloc(allocator, args[2])});
         defer allocator.free(payload);
         const response = try sendRequest(allocator, storage, "info", payload);
@@ -1267,7 +1267,7 @@ fn run() !void {
     }
 
     if (std.mem.eql(u8, command, "logs")) {
-        if (args.len < 3) return fail("Usage: bpm2 logs <name|id> [--lines <n>] [--follow]");
+        if (args.len < 3) return fail("Usage: buncore logs <name|id> [--lines <n>] [--follow]");
         var offset: usize = 0;
         const lines = flagValue(args[2..], "--lines", "-l") orelse "50";
         const follow = hasFlag(args[2..], "--follow") or hasFlag(args[2..], "-f");
@@ -1315,7 +1315,7 @@ fn run() !void {
     }
 
     if (std.mem.eql(u8, command, "heap") or std.mem.eql(u8, command, "heap-analyze") or std.mem.eql(u8, command, "profile")) {
-        if (args.len < 3) return fail("Usage: bpm2 heap|heap-analyze|profile <name|id> [options]");
+        if (args.len < 3) return fail("Usage: buncore heap|heap-analyze|profile <name|id> [options]");
         const include_jsc = hasFlag(args[2..], "--jsc");
         const duration = flagValue(args[2..], "--duration", "-d") orelse "10";
         const duration_seconds = std.fmt.parseInt(i64, duration, 10) catch return fail("Duration must be an integer number of seconds.");
@@ -1332,7 +1332,7 @@ fn run() !void {
     }
 
     if (std.mem.eql(u8, command, "signal")) {
-        if (args.len < 4) return fail("Usage: bpm2 signal <signal> <name|id>");
+        if (args.len < 4) return fail("Usage: buncore signal <signal> <name|id>");
         const sig_name = args[2];
         const target = args[3];
         const payload = try std.fmt.allocPrint(allocator, "{{\"signal\":{s},\"target\":{s}}}", .{ try jsonStringAlloc(allocator, sig_name), try jsonStringAlloc(allocator, target) });
@@ -1344,7 +1344,7 @@ fn run() !void {
     }
 
     if (std.mem.eql(u8, command, "scale")) {
-        if (args.len < 4) return fail("Usage: bpm2 scale <name> <count>");
+        if (args.len < 4) return fail("Usage: buncore scale <name> <count>");
         const target = args[2];
         const count_str = args[3];
         const count = std.fmt.parseInt(i64, count_str, 10) catch return fail("Count must be an integer.");

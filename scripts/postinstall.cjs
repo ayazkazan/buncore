@@ -11,12 +11,12 @@ const version = pkg.version;
 
 const ext = process.platform === "win32" ? ".exe" : "";
 const binDir = path.join(root, "zig-out", "bin");
-const binaryPath = path.join(binDir, `bpm2${ext}`);
-const daemonPath = path.join(binDir, `bpm2d${ext}`);
+const binaryPath = path.join(binDir, `buncore${ext}`);
+const daemonPath = path.join(binDir, `buncored${ext}`);
 
 // Skip if both binaries already exist
 if (fs.existsSync(binaryPath) && fs.existsSync(daemonPath)) {
-  console.log("bpm2: binaries already exist, skipping.");
+  console.log("buncore: binaries already exist, skipping.");
   process.exit(0);
 }
 
@@ -25,11 +25,11 @@ function getPlatformKey() {
   const platform = process.platform;
   const arch = process.arch;
   const map = {
-    "linux-x64": "bpm2-linux-x64",
-    "linux-arm64": "bpm2-linux-arm64",
-    "darwin-x64": "bpm2-darwin-x64",
-    "darwin-arm64": "bpm2-darwin-arm64",
-    "win32-x64": "bpm2-win32-x64",
+    "linux-x64": "buncore-linux-x64",
+    "linux-arm64": "buncore-linux-arm64",
+    "darwin-x64": "buncore-darwin-x64",
+    "darwin-arm64": "buncore-darwin-arm64",
+    "win32-x64": "buncore-win32-x64",
   };
   return map[`${platform}-${arch}`] || null;
 }
@@ -39,7 +39,7 @@ function download(url) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith("https") ? https : http;
     client
-      .get(url, { headers: { "User-Agent": "bpm2-installer" } }, (res) => {
+      .get(url, { headers: { "User-Agent": "buncore-installer" } }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           return download(res.headers.location).then(resolve, reject);
         }
@@ -105,38 +105,38 @@ function extractTarGz(stream, destDir) {
 async function tryDownloadPrebuilt() {
   const platformKey = getPlatformKey();
   if (!platformKey) {
-    console.log(`bpm2: no prebuilt binary for ${process.platform}-${process.arch}`);
+    console.log(`buncore: no prebuilt binary for ${process.platform}-${process.arch}`);
     return false;
   }
 
   const tag = `v${version}`;
-  const url = `https://github.com/ayazkazan/bpm2/releases/download/${tag}/${platformKey}.tar.gz`;
+  const url = `https://github.com/ayazkazan/buncore/releases/download/${tag}/${platformKey}.tar.gz`;
 
-  console.log(`bpm2: downloading prebuilt binary from ${url}...`);
+  console.log(`buncore: downloading prebuilt binary from ${url}...`);
 
   try {
     const stream = await download(url);
     await extractTarGz(stream, binDir);
 
     if (fs.existsSync(binaryPath)) {
-      console.log("bpm2: prebuilt binary installed successfully.");
+      console.log("buncore: prebuilt binary installed successfully.");
       return true;
     }
     return false;
   } catch (err) {
-    console.log(`bpm2: prebuilt download failed (${err.message}), trying zig build...`);
+    console.log(`buncore: prebuilt download failed (${err.message}), trying zig build...`);
     return false;
   }
 }
 
 async function tryZigBuild() {
   try {
-    console.log("bpm2: building from source with zig...");
+    console.log("buncore: building from source with zig...");
     execSync("zig build -Doptimize=ReleaseFast", {
       cwd: root,
       stdio: "inherit",
     });
-    console.log("bpm2: build complete.");
+    console.log("buncore: build complete.");
     return true;
   } catch (err) {
     return false;
@@ -152,14 +152,14 @@ async function main() {
 
   // 3. Neither worked
   console.error(
-    "\nbpm2: installation requires either:\n" +
-      "  - A prebuilt release at https://github.com/ayazkazan/bpm2/releases\n" +
+    "\nbuncore: installation requires either:\n" +
+      "  - A prebuilt release at https://github.com/ayazkazan/buncore/releases\n" +
       "  - Zig compiler (https://ziglang.org/download/)\n" +
-      "\nReinstall with: npm install -g bpm2-cli\n" +
+      "\nReinstall with: npm install -g buncore-cli\n" +
       "Manual build: cd " + root + " && zig build -Doptimize=ReleaseFast\n"
   );
 }
 
 main().catch((err) => {
-  console.error("bpm2: postinstall error:", err.message);
+  console.error("buncore: postinstall error:", err.message);
 });

@@ -40,11 +40,11 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           zig build -Doptimize=ReleaseFast
-          ./zig-out/bin/bpm2 --help || true
+          ./zig-out/bin/buncore --help || true
 
       - name: Smoke test (Windows)
         if: runner.os == 'Windows'
         run: |
           zig build -Doptimize=ReleaseFast
-          .\zig-out\bin\bpm2.exe --help
+          .\zig-out\bin\buncore.exe --help
         shell: pwsh

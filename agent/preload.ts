@@ -8,11 +8,11 @@ type Command =
   | { type: "heap_analyze"; requestId: string; artifactPath: string; resultPath?: string; includeJsc?: boolean }
   | { type: "cpu_profile"; requestId: string; artifactPath: string; resultPath?: string; durationMs?: number };
 
-const host = process.env.BPM2_HOST;
-const port = Number(process.env.BPM2_PORT || 0);
-const token = process.env.BPM2_TOKEN;
-const processId = Number(process.env.BPM2_PROCESS_ID || 0);
-const processName = process.env.BPM2_PROCESS_NAME || "process";
+const host = process.env.BUNCORE_HOST;
+const port = Number(process.env.BUNCORE_PORT || 0);
+const token = process.env.BUNCORE_TOKEN;
+const processId = Number(process.env.BUNCORE_PROCESS_ID || 0);
+const processName = process.env.BUNCORE_PROCESS_NAME || "process";
 const runtimeKind = process.versions.bun ? "bun" : "generic";
 
 if (host && port && token && runtimeKind === "bun") {
@@ -210,7 +210,7 @@ if (host && port && token && runtimeKind === "bun") {
         send({ action: "agent_result", authToken: token, requestId: command.requestId, payload: result });
       }
     } catch (error: any) {
-      appendFileSync("/tmp/bpm2-agent-errors.log", `${new Date().toISOString()} ${String(error?.stack || error)}\n`);
+      appendFileSync("/tmp/buncore-agent-errors.log", `${new Date().toISOString()} ${String(error?.stack || error)}\n`);
       send({ action: "agent_result", authToken: token, requestId: command.requestId, error: String(error?.message || error) });
     }
   };

@@ -789,21 +789,21 @@ fn launchManagedProcess(state: *DaemonState, process: *ManagedProcess) !void {
         }
     }
     if (use_bun) {
-        try env_map.put("BPM2_HOST", state.host);
-        try env_map.put("BPM2_TOKEN", state.token);
+        try env_map.put("BUNCORE_HOST", state.host);
+        try env_map.put("BUNCORE_TOKEN", state.token);
         const port_text = try std.fmt.allocPrint(state.allocator, "{d}", .{state.port});
         defer state.allocator.free(port_text);
-        try env_map.put("BPM2_PORT", port_text);
+        try env_map.put("BUNCORE_PORT", port_text);
         const process_id_text = try std.fmt.allocPrint(state.allocator, "{d}", .{process.id});
         defer state.allocator.free(process_id_text);
-        try env_map.put("BPM2_PROCESS_ID", process_id_text);
-        try env_map.put("BPM2_PROCESS_NAME", process.config.name);
+        try env_map.put("BUNCORE_PROCESS_ID", process_id_text);
+        try env_map.put("BUNCORE_PROCESS_NAME", process.config.name);
     }
 
-    // Cluster mode: set BPM2_REUSEPORT and BPM2_INSTANCE_ID for SO_REUSEPORT load balancing
+    // Cluster mode: set BUNCORE_REUSEPORT and BUNCORE_INSTANCE_ID for SO_REUSEPORT load balancing
     const is_cluster = if (process.config.exec_mode) |mode| std.mem.eql(u8, mode, "cluster") else false;
     if (is_cluster) {
-        try env_map.put("BPM2_REUSEPORT", "true");
+        try env_map.put("BUNCORE_REUSEPORT", "true");
         // Extract instance index from name suffix (e.g. "api-0" -> "0")
         const instance_id = blk: {
             if (std.mem.lastIndexOfScalar(u8, process.config.name, '-')) |dash_idx| {
@@ -813,7 +813,7 @@ fn launchManagedProcess(state: *DaemonState, process: *ManagedProcess) !void {
             }
             break :blk "0";
         };
-        try env_map.put("BPM2_INSTANCE_ID", instance_id);
+        try env_map.put("BUNCORE_INSTANCE_ID", instance_id);
     }
     child_ptr.env_map = &env_map;
     try child_ptr.spawn();
@@ -2007,7 +2007,7 @@ fn dashboardThread(state: *DaemonState) void {
             stream.writer().print("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{ data.len, data }) catch {};
             continue;
         }
-        const html = std.fs.cwd().readFileAlloc(std.heap.page_allocator, index_path, 512 * 1024) catch "<h1>bpm2 dashboard unavailable</h1>";
+        const html = std.fs.cwd().readFileAlloc(std.heap.page_allocator, index_path, 512 * 1024) catch "<h1>buncore dashboard unavailable</h1>";
         defer if (@TypeOf(html) == []u8) std.heap.page_allocator.free(html);
         stream.writer().print("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{ html.len, html }) catch {};
     }

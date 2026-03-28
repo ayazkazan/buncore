@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>bpm2 control room</title>
+    <title>buncore control room</title>
     <style>
       :root {
         --bg: #081319;
@@ -789,7 +789,7 @@
     <main>
       <section class="hero">
         <div>
-          <p class="eyebrow">bpm2 control room</p>
+          <p class="eyebrow">buncore control room</p>
           <h1>Operate your Bun fleet without squinting.</h1>
           <p class="lead">
             Live process health, restart pressure, watcher posture, memory curves, and quick terminal context in one polished operator view.
@@ -810,15 +810,15 @@
             <h2>Quick terminal handoff</h2>
             <div class="command-grid">
               <div class="command-chip">
-                <code>bpm2 monit</code>
+                <code>buncore monit</code>
                 <span>live terminal monitor</span>
               </div>
               <div class="command-chip">
-                <code>bpm2 info &lt;name&gt;</code>
+                <code>buncore info &lt;name&gt;</code>
                 <span>deep runtime detail</span>
               </div>
               <div class="command-chip">
-                <code>bpm2 logs &lt;name&gt; --follow</code>
+                <code>buncore logs &lt;name&gt; --follow</code>
                 <span>annotated log stream</span>
               </div>
             </div>
@@ -975,14 +975,14 @@
       };
 
       const playbook = [
-        ["bpm2 list", "fleet snapshot with CPU, RAM, heap, and restarts"],
-        ["bpm2 monit", "continuous terminal monitor for the same live fleet"],
-        ["bpm2 info <name>", "deep runtime, lifecycle, and watcher profile"],
-        ["bpm2 logs <name> --follow", "annotated stdout/stderr stream"],
-        ["bpm2 dashboard", "print dashboard URL and metrics endpoints"],
-        ["bpm2 heap <name>", "capture a heap snapshot through the Bun agent"],
-        ["bpm2 profile <name> --duration 15", "collect a focused CPU profile"],
-        ["bpm2 save / resurrect", "persist and restore the managed fleet"]
+        ["buncore list", "fleet snapshot with CPU, RAM, heap, and restarts"],
+        ["buncore monit", "continuous terminal monitor for the same live fleet"],
+        ["buncore info <name>", "deep runtime, lifecycle, and watcher profile"],
+        ["buncore logs <name> --follow", "annotated stdout/stderr stream"],
+        ["buncore dashboard", "print dashboard URL and metrics endpoints"],
+        ["buncore heap <name>", "capture a heap snapshot through the Bun agent"],
+        ["buncore profile <name> --duration 15", "collect a focused CPU profile"],
+        ["buncore save / resurrect", "persist and restore the managed fleet"]
       ];
 
       const statusRank = {
@@ -1144,7 +1144,7 @@
             <div class="empty-state">
               <div>
                 <strong>No managed processes yet.</strong>
-                Start one from the terminal with <code>bpm2 start &lt;script&gt; --name api</code>.
+                Start one from the terminal with <code>buncore start &lt;script&gt; --name api</code>.
               </div>
             </div>
           `;
