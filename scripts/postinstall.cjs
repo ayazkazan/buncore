@@ -155,9 +155,8 @@ async function main() {
     "\nbpm2: installation requires either:\n" +
       "  - A prebuilt release at https://github.com/ayazkazan/bpm2/releases\n" +
       "  - Zig compiler (https://ziglang.org/download/)\n" +
-      "\nRun manually: cd " +
-      root +
-      " && zig build -Doptimize=ReleaseFast\n"
+      "\nReinstall with: npm install -g bpm2-cli\n" +
+      "Manual build: cd " + root + " && zig build -Doptimize=ReleaseFast\n"
   );
 }
 
