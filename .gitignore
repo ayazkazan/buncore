@@ -1,0 +1,21 @@
+# Zig build artifacts
+zig-out/
+.zig-cache/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+
+# BPM2 runtime
+~/.bpm2/
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/

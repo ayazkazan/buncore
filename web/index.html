@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>bpm2 control room</title>
+    <style>
+      :root {
+        --bg: #081319;
+        --bg-2: #10242c;
+        --panel: rgba(10, 22, 28, 0.82);
+        --panel-strong: rgba(14, 30, 37, 0.9);
+        --panel-soft: rgba(237, 248, 248, 0.08);
+        --text: #edf7f7;
+        --muted: #9cb5b7;
+        --line: rgba(190, 220, 222, 0.14);
+        --line-strong: rgba(190, 220, 222, 0.24);
+        --accent: #78d7ff;
+        --accent-2: #84f1c7;
+        --ok: #64e39e;
+        --warn: #ffc16c;
+        --bad: #ff7b6b;
+        --shadow: 0 28px 90px rgba(0, 0, 0, 0.35);
+        --radius-xl: 30px;
+        --radius-lg: 24px;
+        --radius-md: 18px;
+        --radius-sm: 14px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        color-scheme: dark;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Avenir Next", "Segoe UI Variable", "IBM Plex Sans", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 8% 12%, rgba(120, 215, 255, 0.22), transparent 30rem),
+          radial-gradient(circle at 92% 14%, rgba(132, 241, 199, 0.18), transparent 22rem),
+          radial-gradient(circle at 50% 100%, rgba(255, 193, 108, 0.12), transparent 28rem),
+          linear-gradient(180deg, #091218 0%, #071116 48%, #08151d 100%);
+        overflow-x: hidden;
+      }
+
+      body::before,
+      body::after {
+        content: "";
+        position: fixed;
+        inset: auto;
+        pointer-events: none;
+        border-radius: 999px;
+        filter: blur(40px);
+        opacity: 0.45;
+      }
+
+      body::before {
+        width: 18rem;
+        height: 18rem;
+        top: 6rem;
+        left: -4rem;
+        background: rgba(120, 215, 255, 0.18);
+      }
+
+      body::after {
+        width: 16rem;
+        height: 16rem;
+        right: -3rem;
+        bottom: 3rem;
+        background: rgba(132, 241, 199, 0.16);
+      }
+
+      main {
+        width: min(1380px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 26px 0 44px;
+      }
+
+      .hero,
+      .summary-card,
+      .fleet-panel,
+      .detail-panel,
+      .fleet-card,
+      .playbook {
+        animation: rise 0.65s cubic-bezier(0.2, 0.85, 0.2, 1) both;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(290px, 0.95fr);
+        gap: 20px;
+        padding: 34px;
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--line);
+        background:
+          linear-gradient(135deg, rgba(20, 42, 50, 0.95), rgba(8, 22, 28, 0.82)),
+          linear-gradient(135deg, rgba(120, 215, 255, 0.08), transparent 55%);
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(120deg, rgba(255, 255, 255, 0.06), transparent 35%),
+          radial-gradient(circle at 85% 18%, rgba(120, 215, 255, 0.18), transparent 12rem);
+        pointer-events: none;
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        font-size: 0.78rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--accent-2);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(2.45rem, 5vw, 4.8rem);
+        line-height: 0.95;
+        letter-spacing: -0.04em;
+        max-width: 11ch;
+      }
+
+      .lead {
+        margin-top: 16px;
+        max-width: 58ch;
+        color: var(--muted);
+        font-size: 1.04rem;
+        line-height: 1.65;
+      }
+
+      .hero-rail {
+        display: grid;
+        gap: 16px;
+        align-content: start;
+      }
+
+      .glass {
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(18px);
+      }
+
+      .live-card,
+      .quick-card {
+        padding: 18px 18px 17px;
+      }
+
+      .live-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(100, 227, 158, 0.28);
+        background: rgba(100, 227, 158, 0.1);
+        color: #dfffea;
+        font-size: 0.88rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .live-pill::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--ok);
+        box-shadow: 0 0 0 0 rgba(100, 227, 158, 0.45);
+        animation: pulse 1.8s infinite;
+      }
+
+      .live-meta {
+        margin-top: 14px;
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .quick-card h2,
+      .panel-title h2 {
+        font-size: 1.08rem;
+        letter-spacing: -0.02em;
+      }
+
+      .command-grid {
+        margin-top: 14px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .command-chip {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .command-chip code,
+      .playbook-item code {
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 0.88rem;
+        color: var(--accent);
+      }
+
+      .command-chip span,
+      .playbook-item span {
+        color: var(--muted);
+        font-size: 0.9rem;
+        text-align: right;
+      }
+
+      .summary-grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .summary-card {
+        padding: 18px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(11, 24, 30, 0.88), rgba(8, 20, 26, 0.72));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+
+      .summary-card .label {
+        display: block;
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .summary-card .value {
+        margin-top: 12px;
+        font-size: clamp(1.4rem, 3vw, 2rem);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+      }
+
+      .summary-card .sub {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .layout {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(340px, 0.95fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .fleet-panel,
+      .detail-panel,
+      .playbook {
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(9, 20, 26, 0.94), rgba(8, 18, 24, 0.84));
+        box-shadow: var(--shadow);
+      }
+
+      .panel-title {
+        padding: 22px 22px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .panel-title p {
+        margin-top: 6px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .panel-tag {
+        flex-shrink: 0;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line-strong);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .fleet-grid {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+        gap: 14px;
+      }
+
+      .fleet-card {
+        position: relative;
+        padding: 18px;
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+          rgba(255, 255, 255, 0.02);
+        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+        cursor: pointer;
+      }
+
+      .fleet-card:hover,
+      .fleet-card:focus-visible {
+        transform: translateY(-2px);
+        border-color: rgba(120, 215, 255, 0.34);
+        box-shadow: 0 20px 44px rgba(0, 0, 0, 0.25);
+        outline: none;
+      }
+
+      .fleet-card.selected {
+        border-color: rgba(120, 215, 255, 0.5);
+        box-shadow: 0 24px 58px rgba(9, 27, 35, 0.42), inset 0 0 0 1px rgba(120, 215, 255, 0.2);
+      }
+
+      .fleet-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .status-badge,
+      .detail-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .status-badge::before,
+      .detail-badge::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .status-online,
+      .detail-online {
+        color: var(--ok);
+        background: rgba(100, 227, 158, 0.12);
+        border: 1px solid rgba(100, 227, 158, 0.24);
+      }
+
+      .status-launching,
+      .status-stopping,
+      .detail-launching,
+      .detail-stopping {
+        color: var(--warn);
+        background: rgba(255, 193, 108, 0.12);
+        border: 1px solid rgba(255, 193, 108, 0.24);
+      }
+
+      .status-errored,
+      .status-stopped,
+      .detail-errored,
+      .detail-stopped {
+        color: var(--bad);
+        background: rgba(255, 123, 107, 0.12);
+        border: 1px solid rgba(255, 123, 107, 0.26);
+      }
+
+      .fleet-id {
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .fleet-card h3 {
+        margin-top: 16px;
+        font-size: 1.25rem;
+        letter-spacing: -0.03em;
+      }
+
+      .fleet-script {
+        margin-top: 8px;
+        color: var(--muted);
+        line-height: 1.5;
+        min-height: 3rem;
+      }
+
+      .meta-row {
+        margin-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .meta-pill {
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .meters {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .meter-row {
+        display: grid;
+        gap: 8px;
+      }
+
+      .meter-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 0.9rem;
+      }
+
+      .meter-head span:first-child {
+        color: var(--muted);
+      }
+
+      .meter-track {
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+      }
+
+      .meter-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        width: 0%;
+        transition: width 220ms ease;
+      }
+
+      .meter-fill.warn {
+        background: linear-gradient(90deg, #ffcf82, #ffac5f);
+      }
+
+      .meter-fill.bad {
+        background: linear-gradient(90deg, #ff9388, #ff6b6b);
+      }
+
+      .detail-panel {
+        padding: 24px;
+        position: sticky;
+        top: 18px;
+      }
+
+      .detail-shell {
+        display: grid;
+        gap: 18px;
+      }
+
+      .detail-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+      }
+
+      .detail-top h2 {
+        font-size: clamp(1.8rem, 4vw, 2.8rem);
+        letter-spacing: -0.05em;
+      }
+
+      .detail-top p {
+        margin-top: 10px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .detail-actions {
+        display: grid;
+        gap: 10px;
+        justify-items: end;
+      }
+
+      .ghost-badge {
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .detail-stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .detail-stat {
+        padding: 14px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .detail-stat .label {
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .detail-stat strong {
+        display: block;
+        margin-top: 10px;
+        font-size: 1.18rem;
+        letter-spacing: -0.03em;
+      }
+
+      .detail-stat small {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .chart-panel,
+      .detail-list,
+      .playbook {
+        padding: 18px;
+      }
+
+      .chart-panel,
+      .detail-list {
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .chart-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        align-items: flex-start;
+      }
+
+      .chart-head p {
+        margin-top: 6px;
+        color: var(--muted);
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .legend span::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .legend .rss {
+        color: var(--accent);
+      }
+
+      .legend .heap {
+        color: var(--accent-2);
+      }
+
+      .spark-wrap {
+        margin-top: 16px;
+        border-radius: 18px;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
+          rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .detail-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .detail-row:last-child {
+        padding-bottom: 0;
+        border-bottom: 0;
+      }
+
+      .detail-row .key {
+        color: var(--muted);
+      }
+
+      .detail-row .val {
+        text-align: right;
+        max-width: 60%;
+        word-break: break-word;
+      }
+
+      .empty-state {
+        min-height: 32rem;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .empty-state strong {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--text);
+        font-size: 1.2rem;
+      }
+
+      .playbook {
+        margin-top: 18px;
+      }
+
+      .playbook-grid {
+        margin-top: 14px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .playbook-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 13px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .source-demo {
+        color: var(--warn);
+      }
+
+      .source-live {
+        color: var(--ok);
+      }
+
+      .source-offline {
+        color: var(--bad);
+      }
+
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(100, 227, 158, 0.48);
+        }
+        70% {
+          box-shadow: 0 0 0 12px rgba(100, 227, 158, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(100, 227, 158, 0);
+        }
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 1160px) {
+        .summary-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .detail-panel {
+          position: static;
+        }
+      }
+
+      @media (max-width: 820px) {
+        main {
+          width: min(100%, calc(100% - 20px));
+          padding-top: 18px;
+        }
+
+        .hero {
+          grid-template-columns: 1fr;
+          padding: 24px;
+        }
+
+        .summary-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .fleet-grid {
+          grid-template-columns: 1fr;
+          padding: 16px;
+        }
+
+        .detail-panel {
+          padding: 18px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .summary-grid,
+        .detail-stats {
+          grid-template-columns: 1fr;
+        }
+
+        .panel-title,
+        .detail-top,
+        .chart-head,
+        .playbook-item,
+        .command-chip,
+        .detail-row {
+          display: grid;
+        }
+
+        .detail-actions {
+          justify-items: start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">bpm2 control room</p>
+          <h1>Operate your Bun fleet without squinting.</h1>
+          <p class="lead">
+            Live process health, restart pressure, watcher posture, memory curves, and quick terminal context in one polished operator view.
+          </p>
+        </div>
+
+        <div class="hero-rail">
+          <section class="glass live-card">
+            <div class="live-pill">Live telemetry</div>
+            <div class="live-meta">
+              <div>Data source: <strong id="sourceLabel" class="source-live">live daemon</strong></div>
+              <div>Last refresh: <strong id="updatedHero">waiting...</strong></div>
+              <div>Selected process: <strong id="selectedHero">none</strong></div>
+            </div>
+          </section>
+
+          <section class="glass quick-card">
+            <h2>Quick terminal handoff</h2>
+            <div class="command-grid">
+              <div class="command-chip">
+                <code>bpm2 monit</code>
+                <span>live terminal monitor</span>
+              </div>
+              <div class="command-chip">
+                <code>bpm2 info &lt;name&gt;</code>
+                <span>deep runtime detail</span>
+              </div>
+              <div class="command-chip">
+                <code>bpm2 logs &lt;name&gt; --follow</code>
+                <span>annotated log stream</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="summary-grid" id="summaryGrid">
+        <article class="summary-card">
+          <span class="label">Processes</span>
+          <div class="value" id="sumCount">0</div>
+          <div class="sub">managed services</div>
+        </article>
+        <article class="summary-card">
+          <span class="label">Online</span>
+          <div class="value" id="sumOnline">0</div>
+          <div class="sub">healthy runtime count</div>
+        </article>
+        <article class="summary-card">
+          <span class="label">Alerts</span>
+          <div class="value" id="sumAlerts">0</div>
+          <div class="sub">errored or stopped</div>
+        </article>
+        <article class="summary-card">
+          <span class="label">Total CPU</span>
+          <div class="value" id="sumCpu">0.0%</div>
+          <div class="sub">aggregate pressure</div>
+        </article>
+        <article class="summary-card">
+          <span class="label">Total RSS</span>
+          <div class="value" id="sumRss">0 B</div>
+          <div class="sub">resident memory</div>
+        </article>
+        <article class="summary-card">
+          <span class="label">Watch Enabled</span>
+          <div class="value" id="sumWatch">0</div>
+          <div class="sub">auto-restart sources</div>
+        </article>
+      </section>
+
+      <section class="layout">
+        <section class="fleet-panel">
+          <div class="panel-title">
+            <div>
+              <h2>Fleet overview</h2>
+              <p>Every process rendered as an operational card instead of a cramped table.</p>
+            </div>
+            <div class="panel-tag" id="fleetTag">waiting for data</div>
+          </div>
+          <div class="fleet-grid" id="fleetGrid"></div>
+        </section>
+
+        <aside class="detail-panel" id="detailPanel"></aside>
+      </section>
+
+      <section class="playbook">
+        <div class="panel-title" style="padding: 0;">
+          <div>
+            <h2>Command playbook</h2>
+            <p>Dashboard and terminal now share the same mental model for every operational step.</p>
+          </div>
+          <div class="panel-tag">Operator flow</div>
+        </div>
+        <div class="playbook-grid" id="playbookGrid"></div>
+      </section>
+    </main>
+
+    <script>
+      const demoProcesses = [
+        {
+          id: 1,
+          name: "api-gateway",
+          script: "./services/api.ts",
+          cwd: "/srv/apps/api",
+          status: "online",
+          pid: 4421,
+          createdAt: Date.now() - 1000 * 60 * 90,
+          startedAt: Date.now() - 1000 * 60 * 54,
+          stoppedAt: null,
+          restarts: 1,
+          unstableRestarts: 0,
+          lastExitCode: 0,
+          runtime: "bun",
+          platform: "linux",
+          watchEnabled: true,
+          watchStrategy: "inotify",
+          watchPreferredStrategy: "inotify",
+          summary: { cpuPercent: 18.6, rss: 184_000_000, heapUsed: 52_000_000, heapTotal: 96_000_000, runtimeLagMs: 6.4 },
+          details: { jscHeapStats: { heapSize: 108_000_000, objectCount: 25291 } }
+        },
+        {
+          id: 2,
+          name: "worker-mailer",
+          script: "./workers/mailer.ts",
+          cwd: "/srv/apps/api",
+          status: "launching",
+          pid: 4470,
+          createdAt: Date.now() - 1000 * 60 * 12,
+          startedAt: Date.now() - 1000 * 70,
+          stoppedAt: null,
+          restarts: 3,
+          unstableRestarts: 1,
+          lastExitCode: 1,
+          runtime: "bun",
+          platform: "linux",
+          watchEnabled: false,
+          watchStrategy: "inotify",
+          watchPreferredStrategy: "inotify",
+          summary: { cpuPercent: 62.4, rss: 132_000_000, heapUsed: 74_000_000, heapTotal: 112_000_000, runtimeLagMs: 41.2 },
+          details: { jscHeapStats: { heapSize: 119_000_000, objectCount: 38105 } }
+        },
+        {
+          id: 3,
+          name: "edge-cache",
+          script: "./services/cache.ts",
+          cwd: "/srv/apps/cache",
+          status: "errored",
+          pid: null,
+          createdAt: Date.now() - 1000 * 60 * 300,
+          startedAt: Date.now() - 1000 * 60 * 8,
+          stoppedAt: Date.now() - 1000 * 60 * 2,
+          restarts: 6,
+          unstableRestarts: 2,
+          lastExitCode: 137,
+          runtime: "bun",
+          platform: "linux",
+          watchEnabled: true,
+          watchStrategy: "inotify",
+          watchPreferredStrategy: "inotify",
+          summary: { cpuPercent: 0, rss: 64_000_000, heapUsed: 0, heapTotal: 0, runtimeLagMs: 0 },
+          details: { jscHeapStats: { heapSize: 0, objectCount: 0 } }
+        }
+      ];
+
+      const demoMetrics = {
+        1: Array.from({ length: 12 }, (_, index) => ({
+          timestamp: Date.now() - (11 - index) * 15_000,
+          rss: 155_000_000 + index * 2_700_000,
+          heapUsed: 45_000_000 + index * 650_000,
+          heapTotal: 96_000_000
+        })),
+        2: Array.from({ length: 12 }, (_, index) => ({
+          timestamp: Date.now() - (11 - index) * 15_000,
+          rss: 118_000_000 + index * 1_100_000,
+          heapUsed: 61_000_000 + index * 1_050_000,
+          heapTotal: 112_000_000
+        })),
+        3: Array.from({ length: 12 }, (_, index) => ({
+          timestamp: Date.now() - (11 - index) * 15_000,
+          rss: 92_000_000 - index * 2_100_000,
+          heapUsed: 14_000_000 - index * 900_000,
+          heapTotal: 80_000_000
+        }))
+      };
+
+      const playbook = [
+        ["bpm2 list", "fleet snapshot with CPU, RAM, heap, and restarts"],
+        ["bpm2 monit", "continuous terminal monitor for the same live fleet"],
+        ["bpm2 info <name>", "deep runtime, lifecycle, and watcher profile"],
+        ["bpm2 logs <name> --follow", "annotated stdout/stderr stream"],
+        ["bpm2 dashboard", "print dashboard URL and metrics endpoints"],
+        ["bpm2 heap <name>", "capture a heap snapshot through the Bun agent"],
+        ["bpm2 profile <name> --duration 15", "collect a focused CPU profile"],
+        ["bpm2 save / resurrect", "persist and restore the managed fleet"]
+      ];
+
+      const statusRank = {
+        online: 0,
+        launching: 1,
+        stopping: 2,
+        errored: 3,
+        stopped: 4
+      };
+
+      const state = {
+        source: "live",
+        processes: [],
+        selectedId: null,
+        metrics: new Map()
+      };
+
+      const params = new URLSearchParams(location.search);
+      const demoMode = params.has("demo");
+
+      const els = {
+        sourceLabel: document.getElementById("sourceLabel"),
+        updatedHero: document.getElementById("updatedHero"),
+        selectedHero: document.getElementById("selectedHero"),
+        fleetTag: document.getElementById("fleetTag"),
+        fleetGrid: document.getElementById("fleetGrid"),
+        detailPanel: document.getElementById("detailPanel"),
+        playbookGrid: document.getElementById("playbookGrid"),
+        sumCount: document.getElementById("sumCount"),
+        sumOnline: document.getElementById("sumOnline"),
+        sumAlerts: document.getElementById("sumAlerts"),
+        sumCpu: document.getElementById("sumCpu"),
+        sumRss: document.getElementById("sumRss"),
+        sumWatch: document.getElementById("sumWatch")
+      };
+
+      const escapeHtml = (value) =>
+        String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+
+      const fmtBytes = (bytes) => {
+        if (bytes == null || Number.isNaN(bytes)) return "n/a";
+        const units = ["B", "KB", "MB", "GB", "TB"];
+        let value = Number(bytes);
+        let index = 0;
+        while (value >= 1024 && index < units.length - 1) {
+          value /= 1024;
+          index += 1;
+        }
+        return `${value.toFixed(value >= 10 || index === 0 ? 1 : 2)} ${units[index]}`;
+      };
+
+      const fmtPercent = (value) => (value == null || Number.isNaN(value) ? "n/a" : `${Number(value).toFixed(1)}%`);
+
+      const fmtLag = (value) => (value == null || Number.isNaN(value) ? "n/a" : `${Number(value).toFixed(2)} ms`);
+
+      const fmtClock = (ts) =>
+        ts
+          ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+          : "n/a";
+
+      const fmtDateTime = (ts) =>
+        ts
+          ? new Date(ts).toLocaleString([], {
+              year: "numeric",
+              month: "short",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit"
+            })
+          : "n/a";
+
+      const fmtDuration = (ms) => {
+        if (!ms || ms < 1000) return "0s";
+        const total = Math.floor(ms / 1000);
+        const days = Math.floor(total / 86400);
+        const hours = Math.floor((total % 86400) / 3600);
+        const minutes = Math.floor((total % 3600) / 60);
+        const seconds = total % 60;
+        if (days) return `${days}d ${hours}h`;
+        if (hours) return `${hours}h ${minutes}m`;
+        if (minutes) return `${minutes}m ${seconds}s`;
+        return `${seconds}s`;
+      };
+
+      const runtimeWindow = (process) => {
+        if (!process?.startedAt) return "n/a";
+        const end = process.status === "online" ? Date.now() : process.stoppedAt ?? Date.now();
+        return fmtDuration(Math.max(end - process.startedAt, 0));
+      };
+
+      const ago = (ts) => {
+        if (!ts) return "n/a";
+        const delta = Math.max(Date.now() - ts, 0);
+        return `${fmtDuration(delta)} ago`;
+      };
+
+      const meterTone = (ratio) => {
+        if (ratio >= 0.85) return "bad";
+        if (ratio >= 0.6) return "warn";
+        return "";
+      };
+
+      const sortProcesses = (processes) =>
+        [...processes].sort((left, right) => {
+          const statusDelta = (statusRank[left.status] ?? 99) - (statusRank[right.status] ?? 99);
+          if (statusDelta !== 0) return statusDelta;
+          const cpuDelta = (right.summary?.cpuPercent ?? 0) - (left.summary?.cpuPercent ?? 0);
+          if (cpuDelta !== 0) return cpuDelta;
+          return String(left.name).localeCompare(String(right.name));
+        });
+
+      const selectedProcess = () => state.processes.find((item) => String(item.id) === String(state.selectedId)) ?? null;
+
+      function renderPlaybook() {
+        els.playbookGrid.innerHTML = playbook
+          .map(
+            ([command, summary]) => `
+              <div class="playbook-item">
+                <code>${escapeHtml(command)}</code>
+                <span>${escapeHtml(summary)}</span>
+              </div>
+            `
+          )
+          .join("");
+      }
+
+      function setSourceLabel(source) {
+        els.sourceLabel.textContent = source === "demo" ? "demo fallback" : source === "offline" ? "offline snapshot" : "live daemon";
+        els.sourceLabel.className = source === "demo" ? "source-demo" : source === "offline" ? "source-offline" : "source-live";
+      }
+
+      function updateSummary(processes) {
+        const online = processes.filter((item) => item.status === "online").length;
+        const alerts = processes.filter((item) => ["errored", "stopped"].includes(item.status)).length;
+        const watch = processes.filter((item) => item.watchEnabled).length;
+        const totalCpu = processes.reduce((sum, item) => sum + Number(item.summary?.cpuPercent || 0), 0);
+        const totalRss = processes.reduce((sum, item) => sum + Number(item.summary?.rss || 0), 0);
+
+        els.sumCount.textContent = String(processes.length);
+        els.sumOnline.textContent = String(online);
+        els.sumAlerts.textContent = String(alerts);
+        els.sumCpu.textContent = fmtPercent(totalCpu);
+        els.sumRss.textContent = fmtBytes(totalRss);
+        els.sumWatch.textContent = String(watch);
+
+        els.updatedHero.textContent = fmtClock(Date.now());
+        els.fleetTag.textContent = processes.length ? `${online}/${processes.length} online` : "no managed processes";
+      }
+
+      function renderFleet(processes) {
+        if (!processes.length) {
+          els.fleetGrid.innerHTML = `
+            <div class="empty-state">
+              <div>
+                <strong>No managed processes yet.</strong>
+                Start one from the terminal with <code>bpm2 start &lt;script&gt; --name api</code>.
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        const maxRss = Math.max(...processes.map((item) => Number(item.summary?.rss || 0)), 1);
+
+        els.fleetGrid.innerHTML = processes
+          .map((process) => {
+            const cpu = Number(process.summary?.cpuPercent || 0);
+            const rss = Number(process.summary?.rss || 0);
+            const heapUsed = Number(process.summary?.heapUsed || 0);
+            const heapTotal = Number(process.summary?.heapTotal || 0);
+            const cpuRatio = Math.max(0, Math.min(cpu / 100, 1));
+            const rssRatio = Math.max(0, Math.min(rss / maxRss, 1));
+            const heapRatio = heapTotal > 0 ? Math.max(0, Math.min(heapUsed / heapTotal, 1)) : 0;
+            const selected = String(process.id) === String(state.selectedId);
+            const watchLabel = process.watchEnabled ? `watch ${process.watchStrategy || "enabled"}` : "watch off";
+
+            return `
+              <article class="fleet-card ${selected ? "selected" : ""}" data-id="${escapeHtml(process.id)}" tabindex="0">
+                <div class="fleet-card-top">
+                  <span class="status-badge status-${escapeHtml(process.status)}">${escapeHtml(process.status)}</span>
+                  <span class="fleet-id">#${escapeHtml(process.id)}</span>
+                </div>
+                <h3>${escapeHtml(process.name)}</h3>
+                <p class="fleet-script">${escapeHtml(process.script || "No script path provided")}</p>
+                <div class="meta-row">
+                  <span class="meta-pill">pid ${escapeHtml(process.pid ?? "-")}</span>
+                  <span class="meta-pill">${escapeHtml(process.runtime || "runtime n/a")}</span>
+                  <span class="meta-pill">${escapeHtml(watchLabel)}</span>
+                </div>
+                <div class="meters">
+                  <div class="meter-row">
+                    <div class="meter-head"><span>CPU</span><strong>${escapeHtml(fmtPercent(cpu))}</strong></div>
+                    <div class="meter-track"><div class="meter-fill ${meterTone(cpuRatio)}" style="width:${(cpuRatio * 100).toFixed(1)}%"></div></div>
+                  </div>
+                  <div class="meter-row">
+                    <div class="meter-head"><span>RSS</span><strong>${escapeHtml(fmtBytes(rss))}</strong></div>
+                    <div class="meter-track"><div class="meter-fill ${meterTone(rssRatio)}" style="width:${(rssRatio * 100).toFixed(1)}%"></div></div>
+                  </div>
+                  <div class="meter-row">
+                    <div class="meter-head"><span>Heap</span><strong>${escapeHtml(fmtBytes(heapUsed))}</strong></div>
+                    <div class="meter-track"><div class="meter-fill ${meterTone(heapRatio)}" style="width:${(heapRatio * 100).toFixed(1)}%"></div></div>
+                  </div>
+                </div>
+                <div class="meta-row" style="margin-top:16px;">
+                  <span class="meta-pill">restarts ${escapeHtml(process.restarts ?? 0)}</span>
+                  <span class="meta-pill">uptime ${escapeHtml(runtimeWindow(process))}</span>
+                  <span class="meta-pill">lag ${escapeHtml(fmtLag(process.summary?.runtimeLagMs))}</span>
+                </div>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function buildPath(points, key, width, height, padding) {
+        const series = points.map((point) => Number(point[key])).filter((value) => Number.isFinite(value));
+        if (series.length < 2) return "";
+        const min = Math.min(...series);
+        const max = Math.max(...series);
+        const range = Math.max(max - min, 1);
+        return points
+          .map((point, index) => {
+            const x = padding + (index / (points.length - 1 || 1)) * (width - padding * 2);
+            const raw = Number(point[key] ?? min);
+            const y = height - padding - ((raw - min) / range) * (height - padding * 2);
+            return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+          })
+          .join(" ");
+      }
+
+      function buildArea(points, key, width, height, padding) {
+        const line = buildPath(points, key, width, height, padding);
+        if (!line) return "";
+        const baseY = height - padding;
+        const firstX = padding;
+        const lastX = width - padding;
+        return `${line} L ${lastX.toFixed(2)} ${baseY.toFixed(2)} L ${firstX.toFixed(2)} ${baseY.toFixed(2)} Z`;
+      }
+
+      function renderDetail(process) {
+        if (!process) {
+          els.selectedHero.textContent = "none";
+          els.detailPanel.innerHTML = `
+            <div class="empty-state">
+              <div>
+                <strong>Select a process card.</strong>
+                Metrics history, lifecycle data, and watcher configuration will appear here.
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        const metrics = state.metrics.get(String(process.id))?.points ?? [];
+        const width = 640;
+        const height = 220;
+        const padding = 18;
+        const rssPath = buildPath(metrics, "rss", width, height, padding);
+        const rssArea = buildArea(metrics, "rss", width, height, padding);
+        const heapPath = buildPath(metrics, "heapUsed", width, height, padding);
+
+        const cpu = Number(process.summary?.cpuPercent || 0);
+        const rss = Number(process.summary?.rss || 0);
+        const heapUsed = Number(process.summary?.heapUsed || 0);
+        const heapTotal = Number(process.summary?.heapTotal || 0);
+        const heapRatio = heapTotal ? `${Math.round((heapUsed / heapTotal) * 100)}% of heap budget` : "heap budget unavailable";
+        const metricsNote = metrics.length ? `${metrics.length} datapoints loaded` : "No metrics history yet";
+
+        els.selectedHero.textContent = process.name;
+
+        els.detailPanel.innerHTML = `
+          <div class="detail-shell">
+            <div class="detail-top">
+              <div>
+                <p class="eyebrow" style="margin-bottom:10px;">selected process</p>
+                <h2>${escapeHtml(process.name)}</h2>
+                <p>${escapeHtml(process.script || "No script path provided")}</p>
+              </div>
+              <div class="detail-actions">
+                <span class="detail-badge detail-${escapeHtml(process.status)}">${escapeHtml(process.status)}</span>
+                <span class="ghost-badge">PID ${escapeHtml(process.pid ?? "-")}</span>
+              </div>
+            </div>
+
+            <div class="detail-stats">
+              <article class="detail-stat">
+                <span class="label">CPU load</span>
+                <strong>${escapeHtml(fmtPercent(cpu))}</strong>
+                <small>${escapeHtml(fmtLag(process.summary?.runtimeLagMs))} runtime lag</small>
+              </article>
+              <article class="detail-stat">
+                <span class="label">Resident memory</span>
+                <strong>${escapeHtml(fmtBytes(rss))}</strong>
+                <small>active RSS footprint</small>
+              </article>
+              <article class="detail-stat">
+                <span class="label">Heap usage</span>
+                <strong>${escapeHtml(fmtBytes(heapUsed))}</strong>
+                <small>${escapeHtml(heapRatio)}</small>
+              </article>
+              <article class="detail-stat">
+                <span class="label">Lifecycle</span>
+                <strong>${escapeHtml(runtimeWindow(process))}</strong>
+                <small>${escapeHtml(process.restarts ?? 0)} restarts recorded</small>
+              </article>
+            </div>
+
+            <section class="chart-panel">
+              <div class="chart-head">
+                <div>
+                  <h2>Resource history</h2>
+                  <p>${escapeHtml(metricsNote)}</p>
+                </div>
+                <div class="legend">
+                  <span class="rss">RSS</span>
+                  <span class="heap">Heap used</span>
+                </div>
+              </div>
+              <div class="spark-wrap">
+                <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Resource history chart">
+                  <defs>
+                    <linearGradient id="rssFill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stop-color="rgba(120, 215, 255, 0.28)"></stop>
+                      <stop offset="100%" stop-color="rgba(120, 215, 255, 0.02)"></stop>
+                    </linearGradient>
+                  </defs>
+                  <g opacity="0.22" stroke="rgba(255,255,255,0.12)">
+                    <line x1="0" y1="40" x2="${width}" y2="40"></line>
+                    <line x1="0" y1="110" x2="${width}" y2="110"></line>
+                    <line x1="0" y1="180" x2="${width}" y2="180"></line>
+                  </g>
+                  ${rssArea ? `<path d="${rssArea}" fill="url(#rssFill)"></path>` : ""}
+                  ${rssPath ? `<path d="${rssPath}" fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue("--accent").trim()}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>` : ""}
+                  ${heapPath ? `<path d="${heapPath}" fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim()}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 6"></path>` : ""}
+                  ${
+                    !rssPath && !heapPath
+                      ? `<text x="50%" y="50%" fill="rgba(237,247,247,0.55)" dominant-baseline="middle" text-anchor="middle" font-size="16">No history points yet</text>`
+                      : ""
+                  }
+                </svg>
+              </div>
+            </section>
+
+            <section class="detail-list">
+              <div class="detail-row"><span class="key">Runtime</span><span class="val">${escapeHtml(process.runtime || "n/a")}</span></div>
+              <div class="detail-row"><span class="key">Platform</span><span class="val">${escapeHtml(process.platform || "n/a")}</span></div>
+              <div class="detail-row"><span class="key">Working directory</span><span class="val">${escapeHtml(process.cwd || "n/a")}</span></div>
+              <div class="detail-row"><span class="key">Watch mode</span><span class="val">${escapeHtml(process.watchEnabled ? "enabled" : "disabled")}</span></div>
+              <div class="detail-row"><span class="key">Watch strategy</span><span class="val">${escapeHtml(process.watchStrategy || "n/a")}</span></div>
+              <div class="detail-row"><span class="key">Preferred watcher</span><span class="val">${escapeHtml(process.watchPreferredStrategy || "n/a")}</span></div>
+              <div class="detail-row"><span class="key">Created</span><span class="val">${escapeHtml(fmtDateTime(process.createdAt))}</span></div>
+              <div class="detail-row"><span class="key">Started</span><span class="val">${escapeHtml(fmtDateTime(process.startedAt))}</span></div>
+              <div class="detail-row"><span class="key">Stopped</span><span class="val">${escapeHtml(fmtDateTime(process.stoppedAt))}</span></div>
+              <div class="detail-row"><span class="key">Last exit code</span><span class="val">${escapeHtml(process.lastExitCode ?? "n/a")}</span></div>
+              <div class="detail-row"><span class="key">JSC heap stats</span><span class="val">${escapeHtml(fmtBytes(process.details?.jscHeapStats?.heapSize))} / ${escapeHtml(process.details?.jscHeapStats?.objectCount ?? "n/a")} objects</span></div>
+              <div class="detail-row"><span class="key">Seen</span><span class="val">${escapeHtml(ago(process.startedAt || process.createdAt))}</span></div>
+            </section>
+          </div>
+        `;
+      }
+
+      async function loadProcesses() {
+        if (demoMode) {
+          return { source: "demo", processes: demoProcesses };
+        }
+
+        try {
+          const response = await fetch("/api/processes", { cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const payload = await response.json();
+          return { source: "live", processes: payload.processes || [] };
+        } catch (error) {
+          if (state.processes.length) {
+            return { source: "offline", processes: state.processes };
+          }
+          return { source: "demo", processes: demoProcesses };
+        }
+      }
+
+      async function loadMetrics(id) {
+        if (demoMode || state.source === "demo") {
+          return demoMetrics[id] || [];
+        }
+
+        try {
+          const response = await fetch(`/api/metrics?id=${encodeURIComponent(id)}`, { cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const payload = await response.json();
+          return payload.metrics || [];
+        } catch (error) {
+          return state.metrics.get(String(id))?.points || [];
+        }
+      }
+
+      async function refresh() {
+        const loaded = await loadProcesses();
+        state.source = loaded.source;
+        setSourceLabel(state.source);
+
+        state.processes = sortProcesses(loaded.processes || []);
+        if (state.processes.length && !state.processes.some((item) => String(item.id) === String(state.selectedId))) {
+          state.selectedId = state.processes[0].id;
+        }
+        if (!state.processes.length) state.selectedId = null;
+
+        updateSummary(state.processes);
+        renderFleet(state.processes);
+
+        const active = selectedProcess();
+        if (active) {
+          const metrics = await loadMetrics(active.id);
+          state.metrics.set(String(active.id), { points: metrics, updatedAt: Date.now() });
+        }
+        renderDetail(active);
+      }
+
+      els.fleetGrid.addEventListener("click", async (event) => {
+        const card = event.target.closest("[data-id]");
+        if (!card) return;
+        state.selectedId = card.getAttribute("data-id");
+        renderFleet(state.processes);
+        renderDetail(selectedProcess());
+        const active = selectedProcess();
+        if (!active) return;
+        const metrics = await loadMetrics(active.id);
+        state.metrics.set(String(active.id), { points: metrics, updatedAt: Date.now() });
+        renderDetail(active);
+      });
+
+      els.fleetGrid.addEventListener("keydown", async (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const card = event.target.closest("[data-id]");
+        if (!card) return;
+        event.preventDefault();
+        card.click();
+      });
+
+      renderPlaybook();
+      refresh();
+      setInterval(refresh, 1500);
+    </script>
+  </body>
+</html>

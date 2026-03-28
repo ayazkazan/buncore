@@ -1,0 +1,53 @@
+{
+  "name": "bpm2",
+  "version": "0.1.0",
+  "description": "Bun Process Manager — a fast, zero-dependency process manager built in Zig for Bun workloads",
+  "type": "module",
+  "bin": {
+    "bpm2": "./bin/bpm2"
+  },
+  "scripts": {
+    "build": "zig build -Doptimize=ReleaseFast",
+    "test": "zig build test",
+    "postinstall": "node scripts/postinstall.js",
+    "agent:fixture": "bun run fixtures/test-app.ts",
+    "smoke": "bash ./smoke.sh",
+    "smoke:windows": "powershell -ExecutionPolicy Bypass -File .\\smoke.ps1",
+    "platform-check": "bash ./platform-check.sh"
+  },
+  "keywords": [
+    "bun",
+    "process-manager",
+    "pm2",
+    "daemon",
+    "cluster",
+    "zig",
+    "monitoring",
+    "devops"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ayazkazan/bpm2.git"
+  },
+  "homepage": "https://github.com/ayazkazan/bpm2#readme",
+  "bugs": {
+    "url": "https://github.com/ayazkazan/bpm2/issues"
+  },
+  "os": ["linux", "darwin", "win32"],
+  "engines": {
+    "node": ">=16"
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "zig/",
+    "agent/",
+    "web/",
+    "fixtures/",
+    "build.zig",
+    "build.zig.zon",
+    "README.md",
+    "LICENSE"
+  ]
+}
