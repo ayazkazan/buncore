@@ -43,6 +43,26 @@ fn writeHero(writer: anytype, title: []const u8, subtitle: []const u8) !void {
     try render.writeDblBoxBottom(writer, width);
 }
 
+fn writeBrandLogo(writer: anytype) !void {
+    const lines = [_]struct { color: []const u8, text: []const u8 }{
+        .{ .color = render.BOLD_CYAN, .text = "██████╗ ██╗   ██╗███╗   ██╗ ██████╗ ██████╗ ██████╗ ███████╗" },
+        .{ .color = render.CYAN, .text = "██╔══██╗██║   ██║████╗  ██║██╔════╝██╔═══██╗██╔══██╗██╔════╝" },
+        .{ .color = render.BOLD_WHITE, .text = "██████╔╝██║   ██║██╔██╗ ██║██║     ██║   ██║██████╔╝█████╗  " },
+        .{ .color = render.BOLD_BLUE, .text = "██╔══██╗██║   ██║██║╚██╗██║██║     ██║   ██║██╔══██╗██╔══╝  " },
+        .{ .color = render.BOLD_CYAN, .text = "██████╔╝╚██████╔╝██║ ╚████║╚██████╗╚██████╔╝██║  ██║███████╗" },
+        .{ .color = render.SLATE, .text = "╚═════╝  ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝" },
+    };
+
+    for (lines) |line| {
+        try writer.writeAll("  ");
+        try render.writeColored(writer, line.color, line.text);
+        try writer.writeByte('\n');
+    }
+    try writer.writeAll("  ");
+    try render.writeMuted(writer, "modern bun process manager • zig control plane");
+    try writer.writeByte('\n');
+}
+
 fn writeSectionTitle(writer: anytype, title: []const u8) !void {
     try writer.writeByte('\n');
     try writer.writeAll("  ");
@@ -59,6 +79,8 @@ fn writeCommandEntry(writer: anytype, syntax: []const u8, description: []const u
 }
 
 fn writeHelp(writer: anytype) !void {
+    try writeBrandLogo(writer);
+    try writer.writeByte('\n');
     try writeHero(writer, "BUNCORE CONTROL SURFACE", "Independent Zig process manager for Bun workloads");
     try writer.writeByte('\n');
     try render.writePill(writer, render.BOLD_GREEN, "Launch");
@@ -1108,6 +1130,8 @@ fn printDashboardInfo(allocator: Allocator, host: []const u8, dashboard_port: u1
     const api_url = try std.fmt.allocPrint(allocator, "{s}/api/processes", .{url});
     defer allocator.free(api_url);
 
+    try writeBrandLogo(out);
+    try out.writeByte('\n');
     try writeHero(out, "BUNCORE DASHBOARD READY", "Open the web control room for live fleet visibility");
     try out.writeByte('\n');
     try render.writePill(out, render.BOLD_CYAN, "Dashboard URL");
