@@ -6,9 +6,8 @@ buncore is built for teams who want more than a basic `start` / `restart` wrappe
 - **fast lifecycle management** for Bun workloads
 - **built-in browser dashboard** for local operations
 - **heap snapshot and CPU profiling flows** from the same CLI
+- **runtime diagnosis for event-loop lag, heap drift, and GC behavior**
 - **cluster, watch, restart, scale, and save/resurrect** workflows in one tool
-
-If PM2 is the familiar Node-era default, **buncore** is the more modern, more opinionated option for Bun-native projects.
 
 ---
 
@@ -106,94 +105,145 @@ The dashboard frontend is built with **React + Vite** and uses a **WebSocket-bas
 
 ---
 
-## Feature Comparison with PM2
+## What buncore Gives You
 
-### Why teams compare buncore with PM2
+buncore is designed to keep the full Bun operations loop in one place: launch, inspect, diagnose, recover, and persist.
 
-**PM2 is the classic default. buncore is the modern Bun-first alternative.**
+### 1. Lifecycle control that stays fast
 
-If your stack is heavily invested in long-standing Node.js workflows, PM2 still feels familiar. But if your priority is a more modern process manager with a stronger Bun experience, built-in diagnostics, and a richer local control surface, buncore is the more forward-looking choice.
+Use the core lifecycle commands when you want to operate one service or a whole fleet without leaving the CLI:
 
-> Legend: **✅ built-in** · **⚠️ supported with caveats / different workflow**
+```bash
+# Start one service
+buncore start app.ts --name api
 
-### Quick decision guide
+# Restart it after a deploy
+buncore restart api
 
-| If you care most about... | Better fit | Why |
-|---------------------------|------------|-----|
-| Mature Node.js familiarity | **PM2** | Huge ecosystem, long operational history, widely known workflows |
-| Bun-first developer experience | **buncore** | Built around Bun-native usage instead of adapting Node-era assumptions |
-| Built-in local control room | **buncore** | Ships with its own browser dashboard and action surface |
-| Traditional Node infrastructure compatibility | **PM2** | A common default in existing Node-heavy teams |
-| Built-in diagnostic workflows | **buncore** | Heap snapshot and CPU profile flows are part of the tool itself |
-| Lean, modern control-plane architecture | **buncore** | Zig daemon + modern process management focus |
+# Graceful rolling reload
+buncore reload api
 
-### Head-to-head: lifecycle & orchestration
+# Stop one process or the whole fleet
+buncore stop api
+buncore stop all
+```
 
-| Capability | buncore | PM2 | Why it matters |
-|-----------|---------|-----|----------------|
-| Start / stop / restart / delete | ✅ | ✅ | Core lifecycle control is covered on both sides |
-| Zero-downtime reload | ✅ | ✅ | Safer deploys for HTTP and long-running services |
-| Runtime scaling | ✅ `buncore scale api 8` | ✅ | Increase or shrink capacity without redesigning config |
-| Watch mode / file-based restart | ✅ | ✅ | Faster iteration in dev, preview, and staging |
-| Custom signal handling | ✅ | ✅ | Useful for graceful shutdowns and advanced runtime hooks |
-| Auto-restart on crashes | ✅ | ✅ | Keeps critical services self-healing after unexpected exits |
-| Exponential backoff restart | ✅ | ✅ | Prevents aggressive crash loops from burning CPU and logs |
-| Memory limit restart | ✅ | ✅ | Protects hosts from runaway memory growth |
-| Cron-based restart | ✅ | ✅ | Good for scheduled maintenance or long-lived worker recycling |
-| Save & resurrect process list | ✅ | ✅ | Restore the same fleet after daemon restart or reboot |
-| Startup integration | ✅ systemd / launchd | ✅ | Makes production boot flows predictable |
+What this gives you:
+- one command surface for start, stop, restart, reload, delete, reset, and signal workflows
+- graceful stop behavior with configurable kill timeouts
+- runtime scaling without rewriting config
 
-### Head-to-head: observability & diagnostics
+```bash
+# Scale a service group
+buncore scale api 6
 
-| Capability | buncore | PM2 | Why it matters |
-|-----------|---------|-----|----------------|
-| Process list / status overview | ✅ | ✅ | Immediate visibility into the current fleet state |
-| Detailed process inspection | ✅ | ✅ | Faster debugging of uptime, runtime, restart, and memory state |
-| Log streaming & tailing | ✅ | ✅ | Daily operational troubleshooting depends on this |
-| Separate stdout / stderr logs | ✅ | ✅ | Cleaner production debugging and incident analysis |
-| Log rotation support | ✅ | ✅ | Prevents disks from silently filling with logs |
-| Real-time metrics | ✅ | ✅ | Helps spot saturation and unhealthy services early |
-| Built-in web dashboard | ✅ local dashboard included | ⚠️ richer web UI usually means PM2 Plus / extra tooling | buncore ships with a local browser-based command center |
-| Heap snapshots | ✅ built-in command flow | ⚠️ usually external inspector workflow | Critical when chasing memory leaks |
-| CPU profiling | ✅ built-in command flow | ⚠️ usually external inspector workflow | Helps explain slow endpoints and hot paths |
-| JSON-friendly outputs / API style | ✅ | ✅ | Makes automation, CI scripts, and custom tooling easier |
+# Send a custom signal
+buncore signal SIGUSR2 api
+```
 
-### Head-to-head: runtime & platform fit
+### 2. Built-in control room for local operations
 
-| Capability | buncore | PM2 | Why it matters |
-|-----------|---------|-----|----------------|
-| Bun-first workflow | ✅ | ⚠️ possible via interpreter, but not Bun-native | Less friction for Bun teams from day one |
-| TypeScript execution experience | ✅ strong native Bun workflow | ⚠️ often transpile- or ts-node-oriented setups | Cleaner DX for TS-first services |
-| Cluster load balancing | ✅ SO_REUSEPORT-based clustering | ✅ cluster mode | Different implementation, same production goal |
-| Container / foreground mode | ✅ `--no-daemon` | ✅ via `pm2-runtime` | Both can work in container environments |
-| Ecosystem config support | ✅ JS / JSON ecosystem support | ✅ | Familiar deployment model for teams migrating from PM2 |
-| Control-plane implementation | ✅ Zig daemon | ✅ Node.js daemon | buncore emphasizes a lean native systems-layer daemon |
+The browser dashboard is part of the product, not an extra layer. It gives you a live fleet list, process actions, logs, runtime charts, launcher controls, and Bun diagnosis from the same screen.
 
-### Why buncore feels more modern
+```bash
+buncore dashboard
+```
 
-- **Built for Bun, not retrofitted onto it**
-  - The workflow feels natural for Bun-native services.
-- **Diagnostics are first-class**
-  - Heap snapshots and CPU profiling are exposed as product features.
-- **The dashboard is part of the product**
-  - Local browser-based fleet visibility does not depend on a separate premium layer.
-- **The control plane is lean by design**
-  - The Zig daemon keeps the operational core focused and lightweight.
+From the dashboard you can:
+- restart, reload, stop, delete, flush logs, and reset counters
+- inspect per-process runtime details
+- scale groups and send signals
+- launch new processes from the UI
+- run Bun runtime diagnosis directly from the inspector
 
-### Where PM2 still wins for some teams
+### 3. Bun-first diagnostics you can actually use
 
-- **It is the known quantity**
-  - Many Node.js teams already know, document, and deploy with PM2.
-- **Its ecosystem gravity is real**
-  - Tutorials, scripts, and infrastructure habits often already revolve around it.
-- **It fits legacy Node-first environments naturally**
-  - If your platform is centered on established Node.js conventions, PM2 may still be the easy default.
+buncore goes beyond generic process status and gives you Bun/JSC-focused tooling from the CLI:
 
-### Bottom line
+```bash
+# Capture a heap snapshot
+buncore heap api
 
-Choose **PM2** if your priority is the most familiar Node.js process-manager path with broad ecosystem recognition.
+# Analyze retained memory structure
+buncore heap-analyze api --jsc
 
-Choose **buncore** if you want a more modern **Bun-oriented** process manager with a stronger built-in control surface, richer local diagnostics, and a control plane designed for today's Bun workflows.
+# Record a CPU profile
+buncore profile api --duration 15
+
+# Sample event-loop lag, heap drift, RSS drift, and GC reclaim
+buncore diagnose api --duration 10 --sample-interval 50 --gc
+```
+
+This is especially useful when you want to answer questions like:
+- is the service CPU-bound or blocked on the event loop?
+- is memory growth happening in JS heap or outside it?
+- does forced GC reclaim most of the growth, or is memory being retained?
+- which runtime signals should I inspect next?
+
+### 4. Real runtime visibility, not just process status
+
+You can inspect the fleet from the terminal, the dashboard, or both:
+
+```bash
+# Fleet snapshot
+buncore list
+
+# Live terminal monitor
+buncore monit
+
+# Full process detail
+buncore info api
+
+# Tail logs
+buncore logs api --lines 200 --follow
+```
+
+What you get out of the box:
+- CPU, RSS, heap, restart counters, and runtime lag
+- stdout/stderr log handling
+- live process charts in the dashboard
+- structured process detail for debugging and operational checks
+
+### 5. Production-oriented restart and resilience controls
+
+buncore includes the controls you usually need after the first deploy, not just during local development:
+
+```bash
+# Restart if memory goes beyond the threshold
+buncore start app.ts --name api --max-memory 512000000
+
+# Add exponential backoff
+buncore start unstable.ts --name worker --exp-backoff-restart-delay 100
+
+# Schedule a restart
+buncore start app.ts --name nightly --cron-restart "0 0 * * *"
+
+# Run multiple instances with cluster mode
+buncore start app.ts --name api --exec-mode cluster --instances 4
+```
+
+These features help with:
+- crash-loop control
+- memory protection
+- scheduled recycling of long-lived workers
+- multi-instance HTTP workloads
+
+### 6. Save, restore, and boot your fleet
+
+You can preserve the active fleet and bring it back later:
+
+```bash
+# Save the current process set
+buncore save
+
+# Restore it later
+buncore resurrect
+
+# Generate startup integration
+buncore startup
+```
+
+This makes buncore useful not just as a dev helper, but as a repeatable local or server-side process control layer.
 
 ---
 
@@ -245,6 +295,9 @@ buncore heap-analyze api
 
 # Capture a CPU profile
 buncore profile api --duration 15
+
+# Run Bun runtime diagnosis
+buncore diagnose api --duration 10 --sample-interval 50 --gc
 ```
 
 ---
@@ -279,7 +332,7 @@ module.exports = {
 };
 ```
 
-This gives you a PM2-style deployment model with a Bun-first runtime experience.
+This gives you an ecosystem-based deployment model with a Bun-first runtime experience.
 
 ---
 
@@ -302,6 +355,7 @@ This gives you a PM2-style deployment model with a Bun-first runtime experience.
 - `buncore heap <name|id>` — Capture a heap snapshot
 - `buncore heap-analyze <name|id>` — Analyze heap artifacts
 - `buncore profile <name|id>` — Capture a CPU profile
+- `buncore diagnose <name|id>` — Sample event-loop lag, heap drift, and GC behavior
 
 ### Scaling & lifecycle control
 - `buncore scale <name> <number>` — Change instance count at runtime
