@@ -84,6 +84,27 @@ function fmtPercent(value) {
   return `${num.toFixed(num >= 100 ? 0 : 1)}%`;
 }
 
+function fmtNumber(value, digits = 0) {
+  const num = Number(value ?? 0);
+  if (!Number.isFinite(num)) return "—";
+  return num.toFixed(digits);
+}
+
+function fmtMilliseconds(value) {
+  const num = Number(value ?? 0);
+  if (!Number.isFinite(num)) return "—";
+  if (Math.abs(num) >= 100) return `${num.toFixed(0)} ms`;
+  if (Math.abs(num) >= 10) return `${num.toFixed(1)} ms`;
+  return `${num.toFixed(2)} ms`;
+}
+
+function fmtDeltaBytes(value) {
+  const num = Number(value ?? 0);
+  if (!Number.isFinite(num)) return "—";
+  const sign = num > 0 ? "+" : num < 0 ? "-" : "";
+  return `${sign}${fmtBytes(Math.abs(num))}`;
+}
+
 function fmtDateTime(value) {
   const num = Number(value ?? 0);
   if (!Number.isFinite(num) || num <= 0) return "—";
@@ -261,6 +282,13 @@ function App() {
   const [logLines, setLogLines] = useState(160);
   const [autoLogs, setAutoLogs] = useState(true);
   const [logs, setLogs] = useState({ text: "", updatedAt: null, loading: false });
+  const [diagnoseForm, setDiagnoseForm] = useState({
+    duration: "8",
+    sampleInterval: "50",
+    forceGc: false,
+  });
+  const [diagnoseBusy, setDiagnoseBusy] = useState(false);
+  const [diagnosticsByProcess, setDiagnosticsByProcess] = useState({});
   const [activity, setActivity] = useState([
     {
       id: Date.now(),
@@ -478,6 +506,56 @@ function App() {
     }
   }, [pullSnapshot, pushActivity, socketState]);
 
+  const runDiagnose = useCallback(async () => {
+    if (!selectedProcess) return null;
+
+    const processId = String(selectedProcess.id);
+    const processName = selectedProcess.name;
+    const durationSeconds = Math.max(1, parseIntOr(diagnoseForm.duration, 8));
+    const sampleIntervalMs = Math.max(25, parseIntOr(diagnoseForm.sampleInterval, 50));
+
+    setDiagnoseBusy(true);
+    pushActivity("info", "diagnose started", `${processName} • ${durationSeconds}s sample window`);
+
+    try {
+      const response = await fetch("/api/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "diagnose",
+          target: processName,
+          durationMs: durationSeconds * 1000,
+          sampleIntervalMs,
+          forceGc: diagnoseForm.forceGc,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || `HTTP ${response.status}`);
+      }
+
+      setDiagnosticsByProcess((current) => ({
+        ...current,
+        [processId]: {
+          processId,
+          processName,
+          at: Date.now(),
+          durationSeconds,
+          sampleIntervalMs,
+          forceGc: diagnoseForm.forceGc,
+          data: result.data || null,
+        },
+      }));
+      pushActivity("success", "diagnose completed", `${processName} runtime diagnosis is ready.`);
+      return result.data || null;
+    } catch (error) {
+      pushActivity("error", "diagnose failed", error.message || "Unknown error");
+      return null;
+    } finally {
+      setDiagnoseBusy(false);
+    }
+  }, [diagnoseForm.duration, diagnoseForm.forceGc, diagnoseForm.sampleInterval, pushActivity, selectedProcess]);
+
   const handleGlobalAction = async (action) => {
     const confirmMap = {
       restart: "Restart all processes?",
@@ -567,6 +645,22 @@ function App() {
   const selectedRss = Number(selectedProcess?.summary?.rss || 0);
   const selectedHeap = Number(selectedProcess?.summary?.heapUsed || 0);
   const selectedHeapTotal = Number(selectedProcess?.summary?.heapTotal || 0);
+  const selectedDetails = selectedProcess?.details || {};
+  const selectedJscHeapStats = selectedDetails?.jscHeapStats || {};
+  const selectedJscMemoryUsage = selectedDetails?.jscMemoryUsage || {};
+  const selectedResourceUsage = selectedDetails?.resourceUsage || {};
+  const selectedDiagnostic = selectedProcess ? diagnosticsByProcess[String(selectedProcess.id)] || null : null;
+  const diagnosticData = selectedDiagnostic?.data || null;
+  const diagnosticEventLoop = diagnosticData?.eventLoop || {};
+  const diagnosticCpu = diagnosticData?.cpu || {};
+  const diagnosticMemory = diagnosticData?.memory || {};
+  const diagnosticGcProbe = diagnosticData?.gcProbe || {};
+  const diagnosticResourceDelta = diagnosticData?.resourceDelta || {};
+  const diagnosticRecentSamples = diagnosticData?.recentSamples || [];
+  const diagnosticSuspicions = diagnosticData?.suspicions || [];
+  const diagnosticBeforeJsc = diagnosticData?.jsc?.before || {};
+  const diagnosticAfterJsc = diagnosticData?.jsc?.after || {};
+  const canDiagnose = selectedProcess?.runtime === "bun" && selectedProcess?.status === "online";
   const heapRatio = selectedHeapTotal > 0
     ? `${Math.round((selectedHeap / selectedHeapTotal) * 100)}% heap usage`
     : "Heap budget information is unavailable";
@@ -812,6 +906,9 @@ function App() {
                       <button className="btn small" disabled={selectedProcess.status !== "online"} onClick={() => runAction("reload", { target: selectedProcess.name })}>Reload</button>
                       <button className="btn small warn" disabled={["stopped", "stopping"].includes(selectedProcess.status)} onClick={() => runAction("stop", { target: selectedProcess.name })}>Stop</button>
                       <button className="btn small danger" onClick={() => runAction("delete", { target: selectedProcess.name }, { confirm: `Delete ?` })}>Delete</button>
+                      <button className="btn small" disabled={!canDiagnose || diagnoseBusy} onClick={() => runDiagnose()}>
+                        {diagnoseBusy ? "Running diagnose..." : "Run diagnose"}
+                      </button>
                       <button className="btn small ghost" onClick={() => runAction("flush", { target: selectedProcess.name })}>Flush log</button>
                       <button className="btn small ghost" onClick={() => runAction("reset", { target: selectedProcess.name })}>Reset counters</button>
                       <button className="btn small ghost" onClick={() => fillFormFromProcess(selectedProcess)}>Copy to launcher</button>
@@ -853,6 +950,178 @@ function App() {
                       </div>
                     </div>
                     <SparkChart points={selectedMetrics} />
+                  </div>
+
+                  <div className="subpanel">
+                    <div className="subpanel-head">
+                      <div>
+                        <h3>Bun runtime diagnose</h3>
+                        <p>Capture event-loop lag, heap drift, GC reclaim, and JSC before/after state for the selected Bun process.</p>
+                      </div>
+                      <div className="panel-actions">
+                        <span className="micro-pill">
+                          {selectedDiagnostic ? `last run ${fmtAgo(selectedDiagnostic.at)}` : "no diagnosis yet"}
+                        </span>
+                        <span className="micro-pill">
+                          {diagnosticData?.window?.sampleCount ? `${diagnosticData.window.sampleCount} samples` : "idle"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="diagnose-toolbar">
+                      <label className="form-field">
+                        <span>Duration (sec)</span>
+                        <input
+                          className="input"
+                          type="number"
+                          min="1"
+                          max="120"
+                          value={diagnoseForm.duration}
+                          onChange={(event) => setDiagnoseForm((current) => ({ ...current, duration: event.target.value }))}
+                        />
+                      </label>
+                      <label className="form-field">
+                        <span>Sample interval (ms)</span>
+                        <input
+                          className="input"
+                          type="number"
+                          min="25"
+                          max="1000"
+                          step="25"
+                          value={diagnoseForm.sampleInterval}
+                          onChange={(event) => setDiagnoseForm((current) => ({ ...current, sampleInterval: event.target.value }))}
+                        />
+                      </label>
+                      <label className="form-field-checkbox">
+                        <span>Force GC probe</span>
+                        <input
+                          type="checkbox"
+                          checked={diagnoseForm.forceGc}
+                          onChange={(event) => setDiagnoseForm((current) => ({ ...current, forceGc: event.target.checked }))}
+                        />
+                      </label>
+                      <div className="diagnose-runner">
+                        <button className="btn primary" disabled={!canDiagnose || diagnoseBusy} onClick={() => runDiagnose()}>
+                          {diagnoseBusy ? "Sampling..." : "Run diagnose"}
+                        </button>
+                        <p className="helper-text">
+                          {canDiagnose
+                            ? "Uses the Bun preload agent and returns a focused runtime report without leaving the dashboard."
+                            : "Diagnose is available for online Bun processes with an active agent connection."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="stats-grid diagnose-stats">
+                      <article className="stat-card">
+                        <span>Live JSC heap</span>
+                        <h4>{fmtBytes(selectedJscHeapStats.heapSize)}</h4>
+                        <p>{selectedJscHeapStats.objectCount ? `${fmtNumber(selectedJscHeapStats.objectCount)} objects` : "No JSC object count yet"}</p>
+                      </article>
+                      <article className="stat-card">
+                        <span>Live JSC current</span>
+                        <h4>{fmtBytes(selectedJscMemoryUsage.current)}</h4>
+                        <p>{selectedJscMemoryUsage.peak ? `peak ${fmtBytes(selectedJscMemoryUsage.peak)}` : "Waiting for JSC memory data"}</p>
+                      </article>
+                      <article className="stat-card">
+                        <span>FS I/O</span>
+                        <h4>{fmtNumber(selectedResourceUsage.fsRead || 0)}</h4>
+                        <p>{selectedResourceUsage.fsWrite ? `${fmtNumber(selectedResourceUsage.fsWrite)} writes` : "No filesystem writes reported"}</p>
+                      </article>
+                      <article className="stat-card">
+                        <span>Context switches</span>
+                        <h4>{fmtNumber(selectedResourceUsage.voluntaryContextSwitches || 0)}</h4>
+                        <p>{selectedResourceUsage.involuntaryContextSwitches ? `${fmtNumber(selectedResourceUsage.involuntaryContextSwitches)} involuntary` : "No involuntary switches yet"}</p>
+                      </article>
+                    </div>
+
+                    {diagnosticData ? (
+                      <div className="diagnose-grid">
+                        <div className="diagnose-summary">
+                          <article className="stat-card">
+                            <span>Avg lag</span>
+                            <h4>{fmtMilliseconds(diagnosticEventLoop.avgLagMs)}</h4>
+                            <p>p95 {fmtMilliseconds(diagnosticEventLoop.p95LagMs)} • max {fmtMilliseconds(diagnosticEventLoop.maxLagMs)}</p>
+                          </article>
+                          <article className="stat-card">
+                            <span>CPU pressure</span>
+                            <h4>{fmtPercent(diagnosticCpu.avgPercent)}</h4>
+                            <p>peak {fmtPercent(diagnosticCpu.maxPercent)}</p>
+                          </article>
+                          <article className="stat-card">
+                            <span>Heap drift</span>
+                            <h4>{fmtDeltaBytes(diagnosticMemory.heapDelta)}</h4>
+                            <p>growth {fmtDeltaBytes(diagnosticMemory.heapGrowthPerMinute)}/min</p>
+                          </article>
+                          <article className="stat-card">
+                            <span>RSS drift</span>
+                            <h4>{fmtDeltaBytes(diagnosticMemory.rssDelta)}</h4>
+                            <p>max {fmtBytes(diagnosticMemory.rssMax)}</p>
+                          </article>
+                          <article className="stat-card">
+                            <span>GC reclaimed</span>
+                            <h4>{fmtDeltaBytes(diagnosticGcProbe.reclaimedHeapBytes ?? diagnosticGcProbe.reportedFreedBytes)}</h4>
+                            <p>{diagnosticGcProbe.requested ? "Forced GC probe was enabled" : "No forced GC probe in this run"}</p>
+                          </article>
+                          <article className="stat-card">
+                            <span>CPU time delta</span>
+                            <h4>{fmtNumber((Number(diagnosticResourceDelta.userCPUTime || 0) + Number(diagnosticResourceDelta.systemCPUTime || 0)) / 1000, 1)} ms</h4>
+                            <p>{fmtNumber(diagnosticResourceDelta.voluntaryContextSwitches || 0)} voluntary switches</p>
+                          </article>
+                        </div>
+
+                        <div className="diagnose-notes">
+                          <div className="subpanel-head">
+                            <div>
+                              <h3>Suspicion hints</h3>
+                              <p>Short interpretations generated from the sampled lag, CPU, heap, RSS, and GC signals.</p>
+                            </div>
+                          </div>
+                          <div className="diagnose-hints">
+                            {diagnosticSuspicions.map((item, index) => (
+                              <article key={`${selectedProcess.id}-hint-${index}`} className="hint-card">
+                                <strong>Signal {index + 1}</strong>
+                                <p>{item}</p>
+                              </article>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="kv-grid diagnose-kv">
+                          <div className="kv-card"><div className="kv-label">Before JSC heap</div><div className="kv-value">{fmtBytes(diagnosticBeforeJsc.heapStats?.heapSize)}</div></div>
+                          <div className="kv-card"><div className="kv-label">After JSC heap</div><div className="kv-value">{fmtBytes(diagnosticAfterJsc.heapStats?.heapSize)}</div></div>
+                          <div className="kv-card"><div className="kv-label">Before current memory</div><div className="kv-value">{fmtBytes(diagnosticBeforeJsc.memoryUsage?.current)}</div></div>
+                          <div className="kv-card"><div className="kv-label">After current memory</div><div className="kv-value">{fmtBytes(diagnosticAfterJsc.memoryUsage?.current)}</div></div>
+                          <div className="kv-card"><div className="kv-label">Lag spikes {"\u003e"} 50ms</div><div className="kv-value">{diagnosticEventLoop.spikesOver50ms ?? 0}</div></div>
+                          <div className="kv-card"><div className="kv-label">Lag spikes {"\u003e"} 100ms</div><div className="kv-value">{diagnosticEventLoop.spikesOver100ms ?? 0}</div></div>
+                        </div>
+
+                        <div className="diagnose-samples">
+                          <div className="subpanel-head">
+                            <div>
+                              <h3>Recent diagnose samples</h3>
+                              <p>The latest per-sample lag, CPU, RSS, and heap points from the diagnosis window.</p>
+                            </div>
+                          </div>
+                          <div className="sample-grid">
+                            {diagnosticRecentSamples.slice(-8).map((sample) => (
+                              <article key={`${selectedProcess.id}-${sample.timestamp}`} className="sample-card">
+                                <span>{fmtDateTime(sample.timestamp)}</span>
+                                <strong>{fmtMilliseconds(sample.lagMs)}</strong>
+                                <p>CPU {fmtPercent(sample.cpuPercent)}</p>
+                                <p>RSS {fmtBytes(sample.rss)}</p>
+                                <p>Heap {fmtBytes(sample.heapUsed)}</p>
+                              </article>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="empty-state compact">
+                        <h3>No diagnosis has been captured yet</h3>
+                        <p>Run diagnose to collect a targeted Bun/JSC sample window for the selected process.</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="subpanel">

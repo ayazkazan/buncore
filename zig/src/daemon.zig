@@ -236,7 +236,7 @@ const AgentConnection = struct {
     last_error: ?[]u8 = null,
     closed: bool = false,
 
-    fn sendCommandAndWait(self: *AgentConnection, command_json: []const u8, request_id: []const u8) ![]u8 {
+    fn sendCommandAndWait(self: *AgentConnection, command_json: []const u8, request_id: []const u8, timeout_ms: u64) ![]u8 {
         self.wait_mutex.lock();
         defer self.wait_mutex.unlock();
 
@@ -253,7 +253,7 @@ const AgentConnection = struct {
         try self.stream.writer().print("{{\"action\":\"command\",\"payload\":{{\"command\":{s}}}}}\n", .{command_json});
 
         while (self.waiting and !self.closed) {
-            self.wait_cond.timedWait(&self.wait_mutex, 30 * std.time.ns_per_s) catch return error.Timeout;
+            self.wait_cond.timedWait(&self.wait_mutex, timeout_ms * std.time.ns_per_ms) catch return error.Timeout;
         }
 
         if (self.closed) return error.ConnectionResetByPeer;
@@ -416,16 +416,28 @@ fn choosePort(base: u16) !u16 {
     return error.AddressInUse;
 }
 
-fn appendLogLine(path: []const u8, process_name: []const u8, stream_name: []const u8, line: []const u8) !void {
+fn openAppendLogFile(path: []const u8) !std.fs.File {
     var file = try std.fs.cwd().createFile(path, .{ .truncate = false, .read = true });
-    defer file.close();
     try file.seekFromEnd(0);
+    return file;
+}
+
+fn writeLogLine(file: *std.fs.File, process_name: []const u8, stream_name: []const u8, line: []const u8) !void {
     try file.writer().print("[{d}] {s} {s}: {s}\n", .{ storage_mod.timestampMs(), process_name, stream_name, line });
 }
 
 fn streamPumpThread(state: *DaemonState, process_id: u32, process_name: []const u8, stream_name: []const u8, file: std.fs.File, log_path: []const u8, separate_log_path: ?[]const u8) void {
     _ = state;
     var local_file = file;
+    defer local_file.close();
+
+    var combined_log = openAppendLogFile(log_path) catch return;
+    defer combined_log.close();
+
+    var separate_log: ?std.fs.File = if (separate_log_path) |sep_path| openAppendLogFile(sep_path) catch null else null;
+    defer {
+        if (separate_log) |*sep_file| sep_file.close();
+    }
 
     var buffer: [4096]u8 = undefined;
     var pending = std.ArrayList(u8).init(std.heap.page_allocator);
@@ -437,9 +449,9 @@ fn streamPumpThread(state: *DaemonState, process_id: u32, process_name: []const 
         pending.appendSlice(buffer[0..read_len]) catch break;
         while (std.mem.indexOfScalar(u8, pending.items, '\n')) |idx| {
             const line = pending.items[0..idx];
-            appendLogLine(log_path, process_name, stream_name, line) catch {};
-            if (separate_log_path) |sep_path| {
-                appendLogLine(sep_path, process_name, stream_name, line) catch {};
+            writeLogLine(&combined_log, process_name, stream_name, line) catch {};
+            if (separate_log) |*sep_file| {
+                writeLogLine(sep_file, process_name, stream_name, line) catch {};
             }
             _ = process_id;
             const rest = pending.items[idx + 1 ..];
@@ -448,9 +460,9 @@ fn streamPumpThread(state: *DaemonState, process_id: u32, process_name: []const 
         }
     }
     if (pending.items.len > 0) {
-        appendLogLine(log_path, process_name, stream_name, pending.items) catch {};
-        if (separate_log_path) |sep_path| {
-            appendLogLine(sep_path, process_name, stream_name, pending.items) catch {};
+        writeLogLine(&combined_log, process_name, stream_name, pending.items) catch {};
+        if (separate_log) |*sep_file| {
+            writeLogLine(sep_file, process_name, stream_name, pending.items) catch {};
         }
     }
 }
@@ -891,6 +903,34 @@ fn stopManagedProcess(process: *ManagedProcess) void {
     terminateProcess(process, false);
 }
 
+fn processStopTimeoutMs(process: *ManagedProcess) u64 {
+    return if (process.config.kill_timeout > 0) process.config.kill_timeout else 6000;
+}
+
+fn lookupProcessStopTimeoutMs(state: *DaemonState, process_id: u32, default_timeout_ms: u64) u64 {
+    state.mutex.lock();
+    defer state.mutex.unlock();
+    if (state.findProcessById(process_id)) |process| {
+        return processStopTimeoutMs(process);
+    }
+    return default_timeout_ms;
+}
+
+fn stopProcessIds(state: *DaemonState, process_ids: []const u32) void {
+    state.mutex.lock();
+    defer state.mutex.unlock();
+    for (process_ids) |process_id| {
+        if (state.findProcessById(process_id)) |process| stopManagedProcess(process);
+    }
+}
+
+fn stopAndWaitProcessIds(state: *DaemonState, process_ids: []const u32) void {
+    stopProcessIds(state, process_ids);
+    for (process_ids) |process_id| {
+        ensureProcessStopped(state, process_id, lookupProcessStopTimeoutMs(state, process_id, 6000));
+    }
+}
+
 fn waitStopped(state: *DaemonState, process_id: u32, timeout_ms: u64) bool {
     const deadline = storage_mod.timestampMs() + @as(i64, @intCast(timeout_ms));
     while (storage_mod.timestampMs() < deadline) {
@@ -927,7 +967,7 @@ fn ensureProcessStopped(state: *DaemonState, process_id: u32, timeout_ms: u64) v
         terminateProcess(process, true);
     }
     state.mutex.unlock();
-    _ = waitStopped(state, process_id, 2000);
+    _ = waitStopped(state, process_id, @min(timeout_ms, 2000));
     state.mutex.lock();
     if (state.findProcessById(process_id)) |process| {
         if (process.pid == null) {
@@ -950,7 +990,7 @@ fn restartProcessById(state: *DaemonState, process_id: u32) void {
     }
     stopManagedProcess(process);
     state.mutex.unlock();
-    ensureProcessStopped(state, process_id, 6000);
+    ensureProcessStopped(state, process_id, processStopTimeoutMs(process));
     state.mutex.lock();
     if (state.findProcessById(process_id)) |stopped_process| {
         relaunchExistingProcess(state, stopped_process) catch {
@@ -1033,7 +1073,7 @@ fn reloadProcessById(state: *DaemonState, process_id: u32) void {
         stopManagedProcess(old_process);
     }
     state.mutex.unlock();
-    ensureProcessStopped(state, process_id, 6000);
+    ensureProcessStopped(state, process_id, lookupProcessStopTimeoutMs(state, process_id, 6000));
 
     // Remove old process entry
     state.mutex.lock();
@@ -1362,8 +1402,18 @@ fn wakePort(host: []const u8, port: u16) void {
 }
 
 fn shutdownThread(state: *DaemonState) void {
-    for (state.processes.items) |process| stopManagedProcess(process);
-    for (state.processes.items) |process| ensureProcessStopped(state, process.id, 4000);
+    state.mutex.lock();
+    const process_ids = state.allocator.alloc(u32, state.processes.items.len) catch {
+        state.mutex.unlock();
+        std.fs.deleteFileAbsolute(state.storage.daemon_file) catch {};
+        std.time.sleep(100 * std.time.ns_per_ms);
+        std.posix.exit(0);
+    };
+    defer state.allocator.free(process_ids);
+    for (state.processes.items, 0..) |process, idx| process_ids[idx] = process.id;
+    state.mutex.unlock();
+
+    stopAndWaitProcessIds(state, process_ids);
     std.fs.deleteFileAbsolute(state.storage.daemon_file) catch {};
     std.time.sleep(100 * std.time.ns_per_ms);
     std.posix.exit(0);
@@ -1470,7 +1520,7 @@ fn handleControlRequest(state: *DaemonState, allocator: Allocator, request: prot
         return protocol.stringifyResponseAlloc(allocator, .{ .success = true, .requestId = request.requestId, .data_json = "{\"ok\":true}" });
     }
 
-    if (std.mem.eql(u8, request.action, "stop") or std.mem.eql(u8, request.action, "restart") or std.mem.eql(u8, request.action, "reload") or std.mem.eql(u8, request.action, "delete") or std.mem.eql(u8, request.action, "info") or std.mem.eql(u8, request.action, "logs") or std.mem.eql(u8, request.action, "flush") or std.mem.eql(u8, request.action, "metrics") or std.mem.eql(u8, request.action, "heap") or std.mem.eql(u8, request.action, "heap-analyze") or std.mem.eql(u8, request.action, "profile")) {
+    if (std.mem.eql(u8, request.action, "stop") or std.mem.eql(u8, request.action, "restart") or std.mem.eql(u8, request.action, "reload") or std.mem.eql(u8, request.action, "delete") or std.mem.eql(u8, request.action, "info") or std.mem.eql(u8, request.action, "logs") or std.mem.eql(u8, request.action, "flush") or std.mem.eql(u8, request.action, "metrics") or std.mem.eql(u8, request.action, "heap") or std.mem.eql(u8, request.action, "heap-analyze") or std.mem.eql(u8, request.action, "profile") or std.mem.eql(u8, request.action, "diagnose")) {
         const target = protocol.payloadString(request.payload, "target") orelse protocol.payloadString(request.payload, "id") orelse return protocol.stringifyResponseAlloc(allocator, .{ .success = false, .requestId = request.requestId, .@"error" = "missing target" });
 
         const is_multi_target_action =
@@ -1490,26 +1540,16 @@ fn handleControlRequest(state: *DaemonState, allocator: Allocator, request: prot
             }
 
             if (std.mem.eql(u8, request.action, "stop")) {
-                for (ids) |process_id| {
-                    state.mutex.lock();
-                    if (state.findProcessById(process_id)) |target_process| stopManagedProcess(target_process);
-                    state.mutex.unlock();
-                    ensureProcessStopped(state, process_id, 6000);
-                }
+                stopAndWaitProcessIds(state, ids);
             } else if (std.mem.eql(u8, request.action, "restart")) {
                 for (ids) |process_id| restartProcessById(state, process_id);
             } else if (std.mem.eql(u8, request.action, "reload")) {
                 for (ids) |process_id| reloadProcessById(state, process_id);
             } else if (std.mem.eql(u8, request.action, "delete")) {
-                for (ids) |process_id| {
-                    state.mutex.lock();
-                    if (state.findProcessById(process_id)) |target_process| stopManagedProcess(target_process);
-                    state.mutex.unlock();
-                    ensureProcessStopped(state, process_id, 6000);
-                    state.mutex.lock();
-                    removeProcessById(state, process_id);
-                    state.mutex.unlock();
-                }
+                stopAndWaitProcessIds(state, ids);
+                state.mutex.lock();
+                for (ids) |process_id| removeProcessById(state, process_id);
+                state.mutex.unlock();
             } else if (std.mem.eql(u8, request.action, "flush")) {
                 state.mutex.lock();
                 for (ids) |process_id| {
@@ -1563,6 +1603,28 @@ fn handleControlRequest(state: *DaemonState, allocator: Allocator, request: prot
             state.mutex.unlock();
             return protocol.stringifyResponseAlloc(allocator, .{ .success = false, .requestId = request.requestId, .@"error" = "bun agent unavailable" });
         };
+
+        if (std.mem.eql(u8, request.action, "diagnose")) {
+            const duration_ms = protocol.payloadInt(request.payload, "durationMs", i64, 10_000);
+            const sample_interval_ms = protocol.payloadInt(request.payload, "sampleIntervalMs", i64, 100);
+            const force_gc = protocol.payloadBool(request.payload, "forceGc", false);
+            const agent_request_id = try std.fmt.allocPrint(allocator, "{d}-{d}", .{ process.id, storage_mod.timestampMs() });
+            defer allocator.free(agent_request_id);
+            const command_json = try std.fmt.allocPrint(allocator, "{{\"type\":\"runtime_diagnose\",\"requestId\":\"{s}\",\"durationMs\":{d},\"sampleIntervalMs\":{d},\"forceGc\":{s}}}", .{
+                agent_request_id,
+                duration_ms,
+                sample_interval_ms,
+                if (force_gc) "true" else "false",
+            });
+            state.mutex.unlock();
+            defer allocator.free(command_json);
+            const wait_timeout_ms: u64 = @intCast(@max(duration_ms + 5000, 10_000));
+            const result = agent.sendCommandAndWait(command_json, agent_request_id, wait_timeout_ms) catch |err| {
+                return protocol.stringifyResponseAlloc(allocator, .{ .success = false, .requestId = request.requestId, .@"error" = @errorName(err) });
+            };
+            defer allocator.free(result);
+            return protocol.stringifyResponseAlloc(allocator, .{ .success = true, .requestId = request.requestId, .data_json = result });
+        }
 
         var artifact_path: []u8 = undefined;
         if (std.mem.eql(u8, request.action, "heap") or std.mem.eql(u8, request.action, "heap-analyze")) {
@@ -2292,6 +2354,7 @@ fn dashboardClientThread(state: *DaemonState, stream_arg: std.net.Stream) void {
             std.mem.eql(u8, action, "reload") or
             std.mem.eql(u8, action, "delete") or
             std.mem.eql(u8, action, "flush") or
+            std.mem.eql(u8, action, "diagnose") or
             std.mem.eql(u8, action, "reset") or
             std.mem.eql(u8, action, "scale") or
             std.mem.eql(u8, action, "signal") or

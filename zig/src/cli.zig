@@ -180,6 +180,7 @@ fn writeHelp(writer: anytype) !void {
     try writeCommandEntry(writer, "buncore heap <name|id> [--jsc]", "Capture a heap snapshot through the Bun preload agent");
     try writeCommandEntry(writer, "buncore heap-analyze <name|id> [--jsc]", "Run heap analysis and print artifact metadata");
     try writeCommandEntry(writer, "buncore profile <name|id> [--duration <seconds>]", "Capture a CPU profile for the selected process");
+    try writeCommandEntry(writer, "buncore diagnose <name|id> [--duration <seconds>] [--gc]", "Sample event-loop lag, heap drift, and JSC internals in one report");
     try writeCommandEntry(writer, "buncore ping", "Verify that the daemon control plane is reachable");
 
     try writeSectionTitle(writer, "Persistence");
@@ -1279,6 +1280,10 @@ fn printArtifactResult(command: []const u8, value: std.json.Value) !void {
         try printJsonPanel("BUNCORE HEAP ANALYSIS", "Analysis summary and generated output paths", value);
         return;
     }
+    if (std.mem.eql(u8, command, "diagnose")) {
+        try printJsonPanel("BUNCORE RUNTIME DIAGNOSIS", "Event-loop lag, heap drift, GC probe, and JSC runtime signals", value);
+        return;
+    }
     try printJsonPanel("BUNCORE CPU PROFILE", "Profiler artifact metadata and capture summary", value);
 }
 
@@ -1466,14 +1471,24 @@ fn run() !void {
         return;
     }
 
-    if (std.mem.eql(u8, command, "heap") or std.mem.eql(u8, command, "heap-analyze") or std.mem.eql(u8, command, "profile")) {
-        if (args.len < 3) return fail("Usage: buncore heap|heap-analyze|profile <name|id> [options]");
+    if (std.mem.eql(u8, command, "heap") or std.mem.eql(u8, command, "heap-analyze") or std.mem.eql(u8, command, "profile") or std.mem.eql(u8, command, "diagnose")) {
+        if (args.len < 3) return fail("Usage: buncore heap|heap-analyze|profile|diagnose <name|id> [options]");
         const include_jsc = hasFlag(args[2..], "--jsc");
+        const force_gc = hasFlag(args[2..], "--gc");
         const duration = flagValue(args[2..], "--duration", "-d") orelse "10";
+        const sample_interval = flagValue(args[2..], "--sample-interval", null) orelse "100";
         const duration_seconds = std.fmt.parseInt(i64, duration, 10) catch return fail("Duration must be an integer number of seconds.");
         const duration_ms = duration_seconds * 1000;
+        const sample_interval_ms = std.fmt.parseInt(i64, sample_interval, 10) catch return fail("Sample interval must be an integer number of milliseconds.");
         const payload = if (std.mem.eql(u8, command, "profile"))
             try std.fmt.allocPrint(allocator, "{{\"target\":{s},\"durationMs\":{d}}}", .{ try jsonStringAlloc(allocator, args[2]), duration_ms })
+        else if (std.mem.eql(u8, command, "diagnose"))
+            try std.fmt.allocPrint(allocator, "{{\"target\":{s},\"durationMs\":{d},\"sampleIntervalMs\":{d},\"forceGc\":{s}}}", .{
+                try jsonStringAlloc(allocator, args[2]),
+                duration_ms,
+                sample_interval_ms,
+                if (force_gc) "true" else "false",
+            })
         else
             try std.fmt.allocPrint(allocator, "{{\"target\":{s},\"includeJsc\":{s}}}", .{ try jsonStringAlloc(allocator, args[2]), if (include_jsc) "true" else "false" });
         defer allocator.free(payload);
