@@ -102,6 +102,8 @@ The dashboard prints the exact local URL for the active daemon and opens a brows
 
 The dashboard port is chosen automatically, starting from `9716`.
 
+The dashboard frontend is built with **React + Vite** and uses a **WebSocket-based live snapshot stream** for real-time fleet updates.
+
 ---
 
 ## Feature Comparison with PM2
@@ -305,6 +307,11 @@ This gives you a PM2-style deployment model with a Bun-first runtime experience.
 - `buncore scale <name> <number>` — Change instance count at runtime
 - `buncore reset <name|all>` — Reset restart counters
 - `buncore signal <signal> <name|id>` — Send a custom signal
+
+### Web dashboard development
+- `npm run web:dev` — Start the Vite development server for the dashboard
+- `npm run web:build` — Build the production dashboard bundle into `web/dist`
+- `npm run web:preview` — Preview the built dashboard bundle locally
 
 ### Persistence & boot integration
 - `buncore save` — Save the current fleet state

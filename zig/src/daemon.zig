@@ -1174,6 +1174,29 @@ fn watchThread(state: *DaemonState) void {
     }
 }
 
+fn writeHistorySliceJson(writer: anytype, process: *ManagedProcess, limit: ?usize) !void {
+    try writer.writeByte('[');
+    const total = process.history.items.len;
+    const start_index = if (limit) |max_points|
+        if (total > max_points) total - max_points else 0
+    else
+        0;
+
+    for (process.history.items[start_index..], 0..) |point, idx| {
+        if (idx > 0) try writer.writeByte(',');
+        try writer.writeByte('{');
+        try writer.print("\"timestamp\":{d},\"rss\":", .{point.timestamp});
+        if (point.rss) |rss| try writer.print("{d}", .{rss}) else try writer.writeAll("null");
+        try writer.writeAll(",\"heapUsed\":");
+        if (point.heapUsed) |heap_used| try writer.print("{d}", .{heap_used}) else try writer.writeAll("null");
+        try writer.writeAll(",\"heapTotal\":");
+        if (point.heapTotal) |heap_total| try writer.print("{d}", .{heap_total}) else try writer.writeAll("null");
+        try writer.writeByte('}');
+    }
+
+    try writer.writeByte(']');
+}
+
 fn buildProcessJson(allocator: Allocator, process: *ManagedProcess) ![]u8 {
     var out = std.ArrayList(u8).init(allocator);
     errdefer out.deinit();
@@ -1215,6 +1238,8 @@ fn buildProcessJson(allocator: Allocator, process: *ManagedProcess) ![]u8 {
     try std.json.stringify(process.summary, .{}, writer);
     try writer.writeAll(",\"details\":");
     try std.json.stringify(process.details, .{}, writer);
+    try writer.writeAll(",\"recentMetrics\":");
+    try writeHistorySliceJson(writer, process, 30);
 
     try writer.writeAll(",\"config\":{");
     try writer.writeAll("\"args\":");
@@ -1276,23 +1301,28 @@ fn buildProcessesListJson(allocator: Allocator, state: *DaemonState) ![]u8 {
     return out.toOwnedSlice();
 }
 
+fn buildDashboardSnapshotJson(allocator: Allocator, state: *DaemonState) ![]u8 {
+    var out = std.ArrayList(u8).init(allocator);
+    errdefer out.deinit();
+    const writer = out.writer();
+    try writer.print("{{\"type\":\"snapshot\",\"timestamp\":{d},\"processes\":[", .{storage_mod.timestampMs()});
+    for (state.processes.items, 0..) |process, idx| {
+        if (idx > 0) try writer.writeByte(',');
+        const process_json = try buildProcessJson(allocator, process);
+        defer allocator.free(process_json);
+        try writer.writeAll(process_json);
+    }
+    try writer.writeAll("]}");
+    return out.toOwnedSlice();
+}
+
 fn buildHistoryJson(allocator: Allocator, process: *ManagedProcess) ![]u8 {
     var out = std.ArrayList(u8).init(allocator);
     errdefer out.deinit();
     const writer = out.writer();
-    try writer.writeAll("{\"metrics\":[");
-    for (process.history.items, 0..) |point, idx| {
-        if (idx > 0) try writer.writeByte(',');
-        try writer.writeByte('{');
-        try writer.print("\"timestamp\":{d},\"rss\":{s},\"heapUsed\":{s},\"heapTotal\":{s}", .{
-            point.timestamp,
-            if (point.rss == null) "null" else try std.fmt.allocPrint(allocator, "{d}", .{point.rss.?}),
-            if (point.heapUsed == null) "null" else try std.fmt.allocPrint(allocator, "{d}", .{point.heapUsed.?}),
-            if (point.heapTotal == null) "null" else try std.fmt.allocPrint(allocator, "{d}", .{point.heapTotal.?}),
-        });
-        try writer.writeByte('}');
-    }
-    try writer.writeAll("]}");
+    try writer.writeAll("{\"metrics\":");
+    try writeHistorySliceJson(writer, process, null);
+    try writer.writeByte('}');
     return out.toOwnedSlice();
 }
 
@@ -2031,12 +2061,24 @@ fn routeClientThread(state: *DaemonState, stream: std.net.Stream) void {
     connection.wait_mutex.unlock();
 }
 
+fn httpTypedResponse(stream: anytype, status: []const u8, content_type: []const u8, data: []const u8) void {
+    stream.writer().print("HTTP/1.1 {s}\r\nContent-Type: {s}\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{ status, content_type, data.len, data }) catch {};
+}
+
 fn httpJsonResponse(stream: anytype, status: []const u8, data: []const u8) void {
-    stream.writer().print("HTTP/1.1 {s}\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{ status, data.len, data }) catch {};
+    httpTypedResponse(stream, status, "application/json; charset=utf-8", data);
 }
 
 fn httpHtmlResponse(stream: anytype, data: []const u8) void {
-    stream.writer().print("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{ data.len, data }) catch {};
+    httpTypedResponse(stream, "200 OK", "text/html; charset=utf-8", data);
+}
+
+fn httpJsResponse(stream: anytype, data: []const u8) void {
+    httpTypedResponse(stream, "200 OK", "text/javascript; charset=utf-8", data);
+}
+
+fn httpCssResponse(stream: anytype, data: []const u8) void {
+    httpTypedResponse(stream, "200 OK", "text/css; charset=utf-8", data);
 }
 
 fn extractHttpBody(buf: []const u8) []const u8 {
@@ -2045,125 +2087,261 @@ fn extractHttpBody(buf: []const u8) []const u8 {
     return "";
 }
 
+fn httpRequestPath(first_line: []const u8) []const u8 {
+    const first_space = std.mem.indexOfScalar(u8, first_line, ' ') orelse return "/";
+    const rest = first_line[first_space + 1 ..];
+    const second_space = std.mem.indexOfScalar(u8, rest, ' ') orelse rest.len;
+    return rest[0..second_space];
+}
+
+fn httpHeaderValue(request_buf: []const u8, header_name: []const u8) ?[]const u8 {
+    var lines = std.mem.splitScalar(u8, request_buf, '\n');
+    _ = lines.next();
+    while (lines.next()) |line_raw| {
+        const line = std.mem.trim(u8, line_raw, " \r\n\t");
+        if (line.len == 0) break;
+        const colon = std.mem.indexOfScalar(u8, line, ':') orelse continue;
+        const name = std.mem.trim(u8, line[0..colon], " \t");
+        const value = std.mem.trim(u8, line[colon + 1 ..], " \t");
+        if (std.ascii.eqlIgnoreCase(name, header_name)) return value;
+    }
+    return null;
+}
+
+fn dashboardDistAssetPath(allocator: Allocator, asset_name: []const u8) ![]u8 {
+    const root = try storage_mod.projectRootFromExe(allocator);
+    defer allocator.free(root);
+    return std.fs.path.join(allocator, &.{ root, "web", "dist", asset_name });
+}
+
+fn contentTypeForPath(path: []const u8) []const u8 {
+    if (std.mem.endsWith(u8, path, ".js")) return "text/javascript; charset=utf-8";
+    if (std.mem.endsWith(u8, path, ".css")) return "text/css; charset=utf-8";
+    if (std.mem.endsWith(u8, path, ".html")) return "text/html; charset=utf-8";
+    if (std.mem.endsWith(u8, path, ".svg")) return "image/svg+xml";
+    if (std.mem.endsWith(u8, path, ".json")) return "application/json; charset=utf-8";
+    if (std.mem.endsWith(u8, path, ".woff2")) return "font/woff2";
+    if (std.mem.endsWith(u8, path, ".woff")) return "font/woff";
+    if (std.mem.endsWith(u8, path, ".ttf")) return "font/ttf";
+    return "application/octet-stream";
+}
+
+fn pathLooksLikeAsset(path: []const u8) bool {
+    return std.mem.startsWith(u8, path, "/assets/") or std.mem.indexOfScalar(u8, path, '.') != null;
+}
+
+fn serveDashboardAsset(allocator: Allocator, stream: anytype, request_path: []const u8) bool {
+    const asset_name = if (request_path.len > 0 and request_path[0] == '/') request_path[1..] else request_path;
+    if (asset_name.len == 0) return false;
+    if (std.mem.indexOf(u8, asset_name, "..") != null) {
+        httpJsonResponse(stream, "403 Forbidden", "{\"success\":false,\"error\":\"invalid asset path\"}");
+        return true;
+    }
+
+    const asset_path = dashboardDistAssetPath(allocator, asset_name) catch return false;
+    defer allocator.free(asset_path);
+
+    const data = std.fs.cwd().readFileAlloc(allocator, asset_path, 4 * 1024 * 1024) catch return false;
+    defer allocator.free(data);
+
+    httpTypedResponse(stream, "200 OK", contentTypeForPath(asset_name), data);
+    return true;
+}
+
+fn websocketAcceptKeyAlloc(allocator: Allocator, client_key: []const u8) ![]u8 {
+    var sha1 = std.crypto.hash.Sha1.init(.{});
+    sha1.update(client_key);
+    sha1.update("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+
+    var digest: [20]u8 = undefined;
+    sha1.final(&digest);
+
+    var encoded: [28]u8 = undefined;
+    const output = std.base64.standard.Encoder.encode(&encoded, &digest);
+    return allocator.dupe(u8, output);
+}
+
+fn websocketWriteTextFrame(stream: anytype, data: []const u8) !void {
+    const writer = stream.writer();
+    try writer.writeByte(0x81);
+    if (data.len <= 125) {
+        try writer.writeByte(@intCast(data.len));
+    } else if (data.len <= 65535) {
+        try writer.writeByte(126);
+        try writer.writeInt(u16, @intCast(data.len), .big);
+    } else {
+        try writer.writeByte(127);
+        try writer.writeInt(u64, @intCast(data.len), .big);
+    }
+    try writer.writeAll(data);
+}
+
+fn websocketSnapshotLoop(state: *DaemonState, stream: *std.net.Stream, allocator: Allocator) void {
+    while (state.running) {
+        {
+            state.mutex.lock();
+            const payload_owned = buildDashboardSnapshotJson(allocator, state) catch null;
+            state.mutex.unlock();
+            defer if (payload_owned) |owned| allocator.free(owned);
+
+            const payload = if (payload_owned) |owned| owned else "{\"type\":\"snapshot\",\"timestamp\":0,\"processes\":[]}";
+            websocketWriteTextFrame(stream, payload) catch break;
+        }
+        std.time.sleep(1100 * std.time.ns_per_ms);
+    }
+}
+
+fn dashboardClientThread(state: *DaemonState, stream_arg: std.net.Stream) void {
+    var stream = stream_arg;
+    defer stream.close();
+
+    var request_storage: [16384]u8 = undefined;
+    const read_len = stream.read(&request_storage) catch return;
+    if (read_len == 0) return;
+    const request_buf = request_storage[0..read_len];
+    const first_line = std.mem.sliceTo(request_buf, '\n');
+    const path = httpRequestPath(first_line);
+    const allocator = std.heap.page_allocator;
+
+    if (std.mem.startsWith(u8, first_line, "OPTIONS ")) {
+        stream.writer().writeAll("HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nContent-Length: 0\r\nConnection: close\r\n\r\n") catch {};
+        return;
+    }
+
+    if (std.mem.eql(u8, path, "/ws")) {
+        const client_key = httpHeaderValue(request_buf, "Sec-WebSocket-Key") orelse {
+            httpJsonResponse(&stream, "400 Bad Request", "{\"success\":false,\"error\":\"missing websocket key\"}");
+            return;
+        };
+        const accept_key = websocketAcceptKeyAlloc(allocator, client_key) catch {
+            httpJsonResponse(&stream, "500 Internal Server Error", "{\"success\":false,\"error\":\"websocket handshake failed\"}");
+            return;
+        };
+        defer allocator.free(accept_key);
+
+        stream.writer().print("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {s}\r\n\r\n", .{accept_key}) catch return;
+        websocketSnapshotLoop(state, &stream, allocator);
+        return;
+    }
+
+    if (std.mem.startsWith(u8, first_line, "GET /api/processes")) {
+        state.mutex.lock();
+        const data = buildProcessesListJson(allocator, state) catch "{\"processes\":[]}";
+        state.mutex.unlock();
+        defer if (@TypeOf(data) == []u8) allocator.free(data);
+        httpJsonResponse(&stream, "200 OK", data);
+        return;
+    }
+    if (std.mem.startsWith(u8, first_line, "GET /api/metrics?id=")) {
+        const query = first_line["GET /api/metrics?id=".len..];
+        const end = std.mem.indexOfScalar(u8, query, ' ') orelse query.len;
+        state.mutex.lock();
+        const process = state.findProcess(query[0..end]);
+        const data = if (process) |p| buildHistoryJson(allocator, p) catch "{\"metrics\":[]}" else "{\"metrics\":[]}";
+        state.mutex.unlock();
+        defer if (@TypeOf(data) == []u8) allocator.free(data);
+        httpJsonResponse(&stream, "200 OK", data);
+        return;
+    }
+    if (std.mem.startsWith(u8, first_line, "GET /api/logs?id=")) {
+        const query = first_line["GET /api/logs?id=".len..];
+        const end = std.mem.indexOfScalar(u8, query, ' ') orelse query.len;
+        const query_str = query[0..end];
+        var target_id = query_str;
+        var tail_lines: usize = 100;
+        if (std.mem.indexOf(u8, query_str, "&lines=")) |amp| {
+            target_id = query_str[0..amp];
+            const lines_str = query_str[amp + 7 ..];
+            tail_lines = std.fmt.parseInt(usize, lines_str, 10) catch 100;
+        }
+        state.mutex.lock();
+        const process = state.findProcess(target_id);
+        const log_data = if (process) |p| readLogSlice(allocator, p.log_path, tail_lines, 0) catch allocator.dupe(u8, "") catch "" else "";
+        state.mutex.unlock();
+        const log_json = std.json.stringifyAlloc(allocator, log_data, .{}) catch "\"\"";
+        defer allocator.free(log_json);
+        defer if (@TypeOf(log_data) == []u8) allocator.free(log_data);
+        const resp = std.fmt.allocPrint(allocator, "{{\"log\":{s}}}", .{log_json}) catch "{\"log\":\"\"}";
+        defer if (@TypeOf(resp) == []u8) allocator.free(resp);
+        httpJsonResponse(&stream, "200 OK", resp);
+        return;
+    }
+    if (std.mem.startsWith(u8, first_line, "POST /api/action")) {
+        const body = extractHttpBody(request_buf);
+        const trimmed = std.mem.trim(u8, body, " \r\n\t");
+        if (trimmed.len == 0) {
+            httpJsonResponse(&stream, "400 Bad Request", "{\"success\":false,\"error\":\"empty body\"}");
+            return;
+        }
+
+        const parsed = std.json.parseFromSlice(std.json.Value, allocator, trimmed, .{ .allocate = .alloc_always }) catch {
+            httpJsonResponse(&stream, "400 Bad Request", "{\"success\":false,\"error\":\"invalid json\"}");
+            return;
+        };
+        defer parsed.deinit();
+
+        const action = protocol.payloadString(parsed.value, "action") orelse {
+            httpJsonResponse(&stream, "400 Bad Request", "{\"success\":false,\"error\":\"missing action\"}");
+            return;
+        };
+
+        const allowed =
+            std.mem.eql(u8, action, "start") or
+            std.mem.eql(u8, action, "stop") or
+            std.mem.eql(u8, action, "restart") or
+            std.mem.eql(u8, action, "reload") or
+            std.mem.eql(u8, action, "delete") or
+            std.mem.eql(u8, action, "flush") or
+            std.mem.eql(u8, action, "reset") or
+            std.mem.eql(u8, action, "scale") or
+            std.mem.eql(u8, action, "signal") or
+            std.mem.eql(u8, action, "save") or
+            std.mem.eql(u8, action, "resurrect");
+        if (!allowed) {
+            httpJsonResponse(&stream, "403 Forbidden", "{\"success\":false,\"error\":\"action not allowed\"}");
+            return;
+        }
+
+        const fake_request = protocol.Request{
+            .authToken = state.token,
+            .action = action,
+            .requestId = "dashboard",
+            .payload = parsed.value,
+        };
+        const response = handleControlRequest(state, allocator, fake_request) catch {
+            httpJsonResponse(&stream, "500 Internal Server Error", "{\"success\":false,\"error\":\"internal error\"}");
+            return;
+        };
+        defer allocator.free(response);
+        httpJsonResponse(&stream, "200 OK", response);
+        return;
+    }
+
+    if (!std.mem.eql(u8, path, "/")) {
+        if (serveDashboardAsset(allocator, &stream, path)) return;
+        if (pathLooksLikeAsset(path)) {
+            httpJsonResponse(&stream, "404 Not Found", "{\"success\":false,\"error\":\"asset not found\"}");
+            return;
+        }
+    }
+
+    const index_path = storage_mod.dashboardIndexPath(allocator) catch {
+        httpHtmlResponse(&stream, "<h1>buncore dashboard unavailable</h1>");
+        return;
+    };
+    defer allocator.free(index_path);
+    const html = std.fs.cwd().readFileAlloc(allocator, index_path, 1024 * 1024) catch "<h1>buncore dashboard unavailable</h1>";
+    defer if (@TypeOf(html) == []u8) allocator.free(html);
+    httpHtmlResponse(&stream, html);
+}
+
 fn dashboardThread(state: *DaemonState) void {
     var server = openListen(state.dashboard_port) catch return;
     defer server.deinit();
-    const index_path = storage_mod.dashboardIndexPath(std.heap.page_allocator) catch return;
-    defer std.heap.page_allocator.free(index_path);
-    const allocator = std.heap.page_allocator;
 
     while (state.running) {
         const conn = server.accept() catch continue;
-        var stream = conn.stream;
-        defer stream.close();
-        var request_storage: [16384]u8 = undefined;
-        const read_len = stream.read(&request_storage) catch continue;
-        if (read_len == 0) continue;
-        const request_buf = request_storage[0..read_len];
-        const first_line = std.mem.sliceTo(request_buf, '\n');
-
-        // CORS preflight
-        if (std.mem.startsWith(u8, first_line, "OPTIONS ")) {
-            stream.writer().writeAll("HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nContent-Length: 0\r\nConnection: close\r\n\r\n") catch {};
-            continue;
-        }
-
-        if (std.mem.startsWith(u8, first_line, "GET /api/processes")) {
-            state.mutex.lock();
-            const data = buildProcessesListJson(allocator, state) catch "{\"processes\":[]}";
-            state.mutex.unlock();
-            defer if (@TypeOf(data) == []u8) allocator.free(data);
-            httpJsonResponse(&stream, "200 OK", data);
-            continue;
-        }
-        if (std.mem.startsWith(u8, first_line, "GET /api/metrics?id=")) {
-            const query = first_line["GET /api/metrics?id=".len..];
-            const end = std.mem.indexOfScalar(u8, query, ' ') orelse query.len;
-            state.mutex.lock();
-            const process = state.findProcess(query[0..end]);
-            const data = if (process) |p| buildHistoryJson(allocator, p) catch "{\"metrics\":[]}" else "{\"metrics\":[]}";
-            state.mutex.unlock();
-            defer if (@TypeOf(data) == []u8) allocator.free(data);
-            httpJsonResponse(&stream, "200 OK", data);
-            continue;
-        }
-        if (std.mem.startsWith(u8, first_line, "GET /api/logs?id=")) {
-            const query = first_line["GET /api/logs?id=".len..];
-            const end = std.mem.indexOfScalar(u8, query, ' ') orelse query.len;
-            const query_str = query[0..end];
-            // Parse id and optional lines param
-            var target_id = query_str;
-            var tail_lines: usize = 100;
-            if (std.mem.indexOf(u8, query_str, "&lines=")) |amp| {
-                target_id = query_str[0..amp];
-                const lines_str = query_str[amp + 7 ..];
-                tail_lines = std.fmt.parseInt(usize, lines_str, 10) catch 100;
-            }
-            state.mutex.lock();
-            const process = state.findProcess(target_id);
-            const log_data = if (process) |p| readLogSlice(allocator, p.log_path, tail_lines, 0) catch allocator.dupe(u8, "") catch "" else "";
-            state.mutex.unlock();
-            const log_json = std.json.stringifyAlloc(allocator, log_data, .{}) catch "\"\"";
-            defer allocator.free(log_json);
-            defer if (@TypeOf(log_data) == []u8) allocator.free(log_data);
-            const resp = std.fmt.allocPrint(allocator, "{{\"log\":{s}}}", .{log_json}) catch "{\"log\":\"\"}";
-            defer if (@TypeOf(resp) == []u8) allocator.free(resp);
-            httpJsonResponse(&stream, "200 OK", resp);
-            continue;
-        }
-        if (std.mem.startsWith(u8, first_line, "POST /api/action")) {
-            const body = extractHttpBody(request_buf);
-            const trimmed = std.mem.trim(u8, body, " \r\n\t");
-            if (trimmed.len == 0) {
-                httpJsonResponse(&stream, "400 Bad Request", "{\"success\":false,\"error\":\"empty body\"}");
-                continue;
-            }
-
-            const parsed = std.json.parseFromSlice(std.json.Value, allocator, trimmed, .{ .allocate = .alloc_always }) catch {
-                httpJsonResponse(&stream, "400 Bad Request", "{\"success\":false,\"error\":\"invalid json\"}");
-                continue;
-            };
-            defer parsed.deinit();
-
-            const action = protocol.payloadString(parsed.value, "action") orelse {
-                httpJsonResponse(&stream, "400 Bad Request", "{\"success\":false,\"error\":\"missing action\"}");
-                continue;
-            };
-
-            const allowed =
-                std.mem.eql(u8, action, "start") or
-                std.mem.eql(u8, action, "stop") or
-                std.mem.eql(u8, action, "restart") or
-                std.mem.eql(u8, action, "reload") or
-                std.mem.eql(u8, action, "delete") or
-                std.mem.eql(u8, action, "flush") or
-                std.mem.eql(u8, action, "reset") or
-                std.mem.eql(u8, action, "scale") or
-                std.mem.eql(u8, action, "signal") or
-                std.mem.eql(u8, action, "save") or
-                std.mem.eql(u8, action, "resurrect");
-            if (!allowed) {
-                httpJsonResponse(&stream, "403 Forbidden", "{\"success\":false,\"error\":\"action not allowed\"}");
-                continue;
-            }
-
-            const fake_request = protocol.Request{
-                .authToken = state.token,
-                .action = action,
-                .requestId = "dashboard",
-                .payload = parsed.value,
-            };
-            const response = handleControlRequest(state, allocator, fake_request) catch {
-                httpJsonResponse(&stream, "500 Internal Server Error", "{\"success\":false,\"error\":\"internal error\"}");
-                continue;
-            };
-            defer allocator.free(response);
-            httpJsonResponse(&stream, "200 OK", response);
-            continue;
-        }
-        const html = std.fs.cwd().readFileAlloc(allocator, index_path, 512 * 1024) catch "<h1>buncore dashboard unavailable</h1>";
-        defer if (@TypeOf(html) == []u8) allocator.free(html);
-        httpHtmlResponse(&stream, html);
+        _ = std.Thread.spawn(.{}, dashboardClientThread, .{ state, conn.stream }) catch conn.stream.close();
     }
 }
 

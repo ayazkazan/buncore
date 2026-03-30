@@ -162,5 +162,5 @@ pub fn agentConfigLoaderPath(allocator: std.mem.Allocator) ![]u8 {
 pub fn dashboardIndexPath(allocator: std.mem.Allocator) ![]u8 {
     const root = try projectRootFromExe(allocator);
     defer allocator.free(root);
-    return std.fs.path.join(allocator, &.{ root, "web", "index.html" });
+    return std.fs.path.join(allocator, &.{ root, "web", "dist", "index.html" });
 }

@@ -7,13 +7,17 @@
     "buncore": "bin/buncore.cjs"
   },
   "scripts": {
-    "build": "zig build -Doptimize=ReleaseFast",
+    "build": "npm --prefix web run build && zig build -Doptimize=ReleaseFast",
+    "build:zig": "zig build -Doptimize=ReleaseFast",
     "test": "zig build test",
     "postinstall": "node scripts/postinstall.cjs",
     "agent:fixture": "bun run fixtures/test-app.ts",
     "smoke": "bash ./smoke.sh",
     "smoke:windows": "powershell -ExecutionPolicy Bypass -File .\\smoke.ps1",
-    "platform-check": "bash ./platform-check.sh"
+    "platform-check": "bash ./platform-check.sh",
+    "web:dev": "npm --prefix web run dev",
+    "web:build": "npm --prefix web run build",
+    "web:preview": "npm --prefix web run preview"
   },
   "keywords": [
     "bun",
