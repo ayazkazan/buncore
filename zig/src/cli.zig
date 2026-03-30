@@ -298,10 +298,23 @@ fn jsonStringAlloc(allocator: Allocator, value: []const u8) ![]u8 {
     return std.json.stringifyAlloc(allocator, value, .{});
 }
 
+fn resolveCwd(allocator: Allocator, cwd_flag: ?[]const u8) ![]u8 {
+    if (cwd_flag) |explicit_cwd| {
+        if (std.fs.path.isAbsolute(explicit_cwd)) return allocator.dupe(u8, explicit_cwd);
+        var buf: [std.fs.max_path_bytes]u8 = undefined;
+        const real = try std.fs.cwd().realpath(explicit_cwd, &buf);
+        return allocator.dupe(u8, real);
+    }
+    var buf: [std.fs.max_path_bytes]u8 = undefined;
+    const real = try std.fs.cwd().realpath(".", &buf);
+    return allocator.dupe(u8, real);
+}
+
 fn startPayloadJson(allocator: Allocator, args: [][]u8) ![]u8 {
     const script = args[1];
     const name = flagValue(args, "--name", "-n") orelse std.fs.path.stem(script);
-    const cwd = flagValue(args, "--cwd", null) orelse ".";
+    const cwd = try resolveCwd(allocator, flagValue(args, "--cwd", null));
+    defer allocator.free(cwd);
     const interpreter = flagValue(args, "--interpreter", null);
     const instances = flagValue(args, "--instances", "-i") orelse "1";
     const max_memory = flagValue(args, "--max-memory", null) orelse "0";
@@ -1000,7 +1013,52 @@ fn stripJsonCommentsAlloc(allocator: Allocator, input: []const u8) ![]u8 {
     return out.toOwnedSlice();
 }
 
+fn patchAppCwd(allocator: Allocator, app: std.json.Value, default_cwd: []const u8) ![]u8 {
+    if (app != .object) return std.json.stringifyAlloc(allocator, app, .{});
+    var obj = app.object;
+    const needs_patch = blk: {
+        const cwd_val = obj.get("cwd") orelse break :blk true;
+        if (cwd_val != .string) break :blk true;
+        if (cwd_val.string.len == 0) break :blk true;
+        if (std.fs.path.isAbsolute(cwd_val.string)) break :blk false;
+        break :blk true;
+    };
+    if (needs_patch) {
+        const existing_cwd = if (obj.get("cwd")) |v| (if (v == .string and v.string.len > 0) v.string else null) else null;
+        const resolved = blk: {
+            if (existing_cwd) |rel| {
+                var buf: [std.fs.max_path_bytes]u8 = undefined;
+                const real = std.fs.cwd().realpath(rel, &buf) catch default_cwd;
+                break :blk try allocator.dupe(u8, real);
+            }
+            break :blk try allocator.dupe(u8, default_cwd);
+        };
+        defer allocator.free(resolved);
+
+        var out = std.ArrayList(u8).init(allocator);
+        errdefer out.deinit();
+        const writer = out.writer();
+        try writer.writeByte('{');
+        try writer.writeAll("\"cwd\":");
+        try std.json.stringify(resolved, .{}, writer);
+        var iter = obj.iterator();
+        while (iter.next()) |entry| {
+            if (std.mem.eql(u8, entry.key_ptr.*, "cwd")) continue;
+            try writer.writeByte(',');
+            try std.json.stringify(entry.key_ptr.*, .{}, writer);
+            try writer.writeByte(':');
+            try std.json.stringify(entry.value_ptr.*, .{}, writer);
+        }
+        try writer.writeByte('}');
+        return out.toOwnedSlice();
+    }
+    return std.json.stringifyAlloc(allocator, app, .{});
+}
+
 fn handleConfigStart(allocator: Allocator, storage: storage_mod.Storage, target: []const u8, env_name: ?[]const u8) !void {
+    const cli_cwd = try resolveCwd(allocator, null);
+    defer allocator.free(cli_cwd);
+
     if (std.mem.endsWith(u8, target, ".json") or std.mem.endsWith(u8, target, ".jsonc")) {
         const content = try std.fs.cwd().readFileAlloc(allocator, target, 1024 * 1024);
         defer allocator.free(content);
@@ -1010,9 +1068,9 @@ fn handleConfigStart(allocator: Allocator, storage: storage_mod.Storage, target:
             apps: []std.json.Value,
         }, allocator, cleaned, .{ .ignore_unknown_fields = true, .allocate = .alloc_always });
         for (parsed.value.apps) |app| {
-            const json = try std.json.stringifyAlloc(allocator, app, .{});
+            const json = try patchAppCwd(allocator, app, cli_cwd);
+            defer allocator.free(json);
             const response = try sendRequest(allocator, storage, "start", json);
-            allocator.free(json);
             if (!response.success) return fail(response.@"error" orelse "start failed");
         }
         return;
@@ -1036,9 +1094,9 @@ fn handleConfigStart(allocator: Allocator, storage: storage_mod.Storage, target:
         apps: []std.json.Value,
     }, allocator, stdout, .{ .ignore_unknown_fields = true, .allocate = .alloc_always });
     for (parsed.value.apps) |app| {
-        const json = try std.json.stringifyAlloc(allocator, app, .{});
+        const json = try patchAppCwd(allocator, app, cli_cwd);
+        defer allocator.free(json);
         const response = try sendRequest(allocator, storage, "start", json);
-        allocator.free(json);
         if (!response.success) return fail(response.@"error" orelse "start failed");
     }
 }
@@ -1275,7 +1333,9 @@ fn run() !void {
             // Forward the start command (strip --no-daemon from args for payload)
             if (std.mem.eql(u8, command, "start") and args.len >= 3) {
                 const target = args[2];
-                if (std.mem.endsWith(u8, target, ".ts") and std.mem.indexOf(u8, target, "ecosystem") != null or std.mem.endsWith(u8, target, ".js") or std.mem.endsWith(u8, target, ".json") or std.mem.endsWith(u8, target, ".jsonc")) {
+                const is_config = std.mem.endsWith(u8, target, ".json") or std.mem.endsWith(u8, target, ".jsonc") or
+                    ((std.mem.endsWith(u8, target, ".ts") or std.mem.endsWith(u8, target, ".js")) and std.mem.indexOf(u8, target, "ecosystem") != null);
+                if (is_config) {
                     const env_name = flagValue(args[2..], "--env", null);
                     handleConfigStart(allocator, storage, target, env_name) catch {};
                 } else {
@@ -1305,7 +1365,9 @@ fn run() !void {
     if (std.mem.eql(u8, command, "start")) {
         if (args.len < 3) return fail("Usage: buncore start <script|config> [options]");
         const target = args[2];
-        if (std.mem.endsWith(u8, target, ".ts") and std.mem.indexOf(u8, target, "ecosystem") != null or std.mem.endsWith(u8, target, ".js") or std.mem.endsWith(u8, target, ".json") or std.mem.endsWith(u8, target, ".jsonc")) {
+        if (std.mem.endsWith(u8, target, ".json") or std.mem.endsWith(u8, target, ".jsonc") or
+            ((std.mem.endsWith(u8, target, ".ts") or std.mem.endsWith(u8, target, ".js")) and std.mem.indexOf(u8, target, "ecosystem") != null))
+        {
             const env_name = flagValue(args[2..], "--env", null);
             try handleConfigStart(allocator, storage, target, env_name);
         } else {
