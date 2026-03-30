@@ -1,28 +1,29 @@
 <!doctype html>
-<html lang="en">
+<html lang="tr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>buncore control room</title>
+    <title>buncore command center</title>
     <style>
       :root {
-        --bg: #081319;
-        --bg-2: #10242c;
-        --panel: rgba(10, 22, 28, 0.82);
-        --panel-strong: rgba(14, 30, 37, 0.9);
-        --panel-soft: rgba(237, 248, 248, 0.08);
-        --text: #edf7f7;
-        --muted: #9cb5b7;
-        --line: rgba(190, 220, 222, 0.14);
-        --line-strong: rgba(190, 220, 222, 0.24);
-        --accent: #78d7ff;
-        --accent-2: #84f1c7;
-        --ok: #64e39e;
-        --warn: #ffc16c;
-        --bad: #ff7b6b;
-        --shadow: 0 28px 90px rgba(0, 0, 0, 0.35);
-        --radius-xl: 30px;
-        --radius-lg: 24px;
+        color-scheme: dark;
+        --bg: #071118;
+        --bg-2: #0d1822;
+        --panel: rgba(11, 22, 31, 0.86);
+        --panel-2: rgba(15, 28, 39, 0.92);
+        --panel-3: rgba(255, 255, 255, 0.045);
+        --line: rgba(196, 219, 232, 0.12);
+        --line-strong: rgba(196, 219, 232, 0.2);
+        --text: #eef7fb;
+        --muted: #93aab8;
+        --accent: #63d7ff;
+        --accent-2: #78f3c5;
+        --ok: #62e0a3;
+        --warn: #ffbf69;
+        --bad: #ff7b7b;
+        --shadow: 0 30px 80px rgba(0, 0, 0, 0.32);
+        --radius-xl: 28px;
+        --radius-lg: 22px;
         --radius-md: 18px;
         --radius-sm: 14px;
       }
@@ -31,31 +32,29 @@
         box-sizing: border-box;
       }
 
-      html {
-        color-scheme: dark;
+      html,
+      body {
+        min-height: 100%;
       }
 
       body {
         margin: 0;
-        min-height: 100vh;
-        font-family: "Avenir Next", "Segoe UI Variable", "IBM Plex Sans", sans-serif;
+        font-family: Inter, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
         color: var(--text);
         background:
-          radial-gradient(circle at 8% 12%, rgba(120, 215, 255, 0.22), transparent 30rem),
-          radial-gradient(circle at 92% 14%, rgba(132, 241, 199, 0.18), transparent 22rem),
-          radial-gradient(circle at 50% 100%, rgba(255, 193, 108, 0.12), transparent 28rem),
-          linear-gradient(180deg, #091218 0%, #071116 48%, #08151d 100%);
-        overflow-x: hidden;
+          radial-gradient(circle at 12% 12%, rgba(99, 215, 255, 0.18), transparent 30rem),
+          radial-gradient(circle at 88% 8%, rgba(120, 243, 197, 0.14), transparent 26rem),
+          radial-gradient(circle at 50% 120%, rgba(255, 191, 105, 0.1), transparent 30rem),
+          linear-gradient(180deg, #08121a 0%, #071118 50%, #08131b 100%);
       }
 
       body::before,
       body::after {
         content: "";
         position: fixed;
-        inset: auto;
-        pointer-events: none;
         border-radius: 999px;
-        filter: blur(40px);
+        filter: blur(42px);
+        pointer-events: none;
         opacity: 0.45;
       }
 
@@ -63,118 +62,132 @@
         width: 18rem;
         height: 18rem;
         top: 6rem;
-        left: -4rem;
-        background: rgba(120, 215, 255, 0.18);
+        left: -5rem;
+        background: rgba(99, 215, 255, 0.16);
       }
 
       body::after {
         width: 16rem;
         height: 16rem;
-        right: -3rem;
+        right: -4rem;
         bottom: 3rem;
-        background: rgba(132, 241, 199, 0.16);
+        background: rgba(120, 243, 197, 0.14);
       }
 
-      main {
-        width: min(1380px, calc(100% - 32px));
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+        color: inherit;
+        background: none;
+      }
+
+      code,
+      pre {
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+      }
+
+      .app-shell {
+        width: min(1600px, calc(100% - 28px));
         margin: 0 auto;
-        padding: 26px 0 44px;
+        padding: 14px 0 32px;
       }
 
-      .hero,
-      .summary-card,
-      .fleet-panel,
-      .detail-panel,
-      .fleet-card,
-      .playbook {
-        animation: rise 0.65s cubic-bezier(0.2, 0.85, 0.2, 1) both;
-      }
-
-      .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1.45fr) minmax(290px, 0.95fr);
-        gap: 20px;
-        padding: 34px;
-        border-radius: var(--radius-xl);
+      .panel-surface {
         border: 1px solid var(--line);
+        border-radius: var(--radius-xl);
         background:
-          linear-gradient(135deg, rgba(20, 42, 50, 0.95), rgba(8, 22, 28, 0.82)),
-          linear-gradient(135deg, rgba(120, 215, 255, 0.08), transparent 55%);
+          linear-gradient(180deg, rgba(12, 23, 31, 0.94), rgba(10, 20, 28, 0.82)),
+          linear-gradient(120deg, rgba(99, 215, 255, 0.06), transparent 45%);
         box-shadow: var(--shadow);
-        position: relative;
-        overflow: hidden;
+        backdrop-filter: blur(18px);
       }
 
-      .hero::after {
+      .topbar {
+        position: sticky;
+        top: 12px;
+        z-index: 12;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+        border: 1px solid rgba(99, 215, 255, 0.28);
+        background:
+          radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.28), transparent 48%),
+          linear-gradient(135deg, rgba(99, 215, 255, 0.3), rgba(120, 243, 197, 0.12));
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.12),
+          0 12px 30px rgba(99, 215, 255, 0.12);
+        position: relative;
+      }
+
+      .brand-mark::after {
         content: "";
         position: absolute;
-        inset: 0;
-        background:
-          linear-gradient(120deg, rgba(255, 255, 255, 0.06), transparent 35%),
-          radial-gradient(circle at 85% 18%, rgba(120, 215, 255, 0.18), transparent 12rem);
-        pointer-events: none;
+        inset: 11px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.24);
       }
 
       .eyebrow {
-        margin: 0 0 12px;
-        font-size: 0.78rem;
-        letter-spacing: 0.22em;
+        margin: 0 0 6px;
+        font-size: 0.75rem;
+        letter-spacing: 0.2em;
         text-transform: uppercase;
         color: var(--accent-2);
       }
 
-      h1,
-      h2,
-      h3,
+      .brand h1,
+      .hero h2,
+      .panel-head h2,
+      .subpanel-head h3,
       p {
         margin: 0;
       }
 
-      h1 {
-        font-size: clamp(2.45rem, 5vw, 4.8rem);
-        line-height: 0.95;
-        letter-spacing: -0.04em;
-        max-width: 11ch;
+      .brand h1 {
+        font-size: 1.25rem;
+        letter-spacing: -0.03em;
       }
 
-      .lead {
-        margin-top: 16px;
-        max-width: 58ch;
-        color: var(--muted);
-        font-size: 1.04rem;
-        line-height: 1.65;
-      }
-
-      .hero-rail {
-        display: grid;
-        gap: 16px;
-        align-content: start;
-      }
-
-      .glass {
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.04);
-        backdrop-filter: blur(18px);
-      }
-
-      .live-card,
-      .quick-card {
-        padding: 18px 18px 17px;
+      .topbar-controls {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
       }
 
       .live-pill {
         display: inline-flex;
         align-items: center;
         gap: 10px;
-        padding: 8px 12px;
+        padding: 10px 14px;
         border-radius: 999px;
-        border: 1px solid rgba(100, 227, 158, 0.28);
-        background: rgba(100, 227, 158, 0.1);
-        color: #dfffea;
-        font-size: 0.88rem;
+        border: 1px solid rgba(98, 224, 163, 0.24);
+        background: rgba(98, 224, 163, 0.1);
+        color: #dffcea;
+        font-size: 0.9rem;
         font-weight: 700;
-        letter-spacing: 0.02em;
       }
 
       .live-pill::before {
@@ -183,59 +196,188 @@
         height: 10px;
         border-radius: 50%;
         background: var(--ok);
-        box-shadow: 0 0 0 0 rgba(100, 227, 158, 0.45);
-        animation: pulse 1.8s infinite;
+        box-shadow: 0 0 0 rgba(98, 224, 163, 0.34);
+        animation: pulse 1.7s infinite;
       }
 
-      .live-meta {
-        margin-top: 14px;
-        display: grid;
-        gap: 8px;
+      .live-pill.offline {
+        border-color: rgba(255, 123, 123, 0.26);
+        background: rgba(255, 123, 123, 0.1);
+        color: #ffe3e3;
+      }
+
+      .live-pill.offline::before {
+        background: var(--bad);
+        box-shadow: none;
+        animation: none;
+      }
+
+      .subtle-text {
         color: var(--muted);
-        font-size: 0.92rem;
-      }
-
-      .quick-card h2,
-      .panel-title h2 {
-        font-size: 1.08rem;
-        letter-spacing: -0.02em;
-      }
-
-      .command-grid {
-        margin-top: 14px;
-        display: grid;
-        gap: 10px;
-      }
-
-      .command-chip {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-        padding: 12px 14px;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        background: rgba(255, 255, 255, 0.04);
-      }
-
-      .command-chip code,
-      .playbook-item code {
-        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
         font-size: 0.88rem;
-        color: var(--accent);
       }
 
-      .command-chip span,
-      .playbook-item span {
+      .toggle,
+      .inline-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .toggle input,
+      .inline-toggle input {
+        accent-color: var(--accent);
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 0 14px;
+        border-radius: 14px;
+        border: 1px solid var(--line-strong);
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--text);
+        cursor: pointer;
+        transition:
+          transform 150ms ease,
+          border-color 150ms ease,
+          background 150ms ease,
+          opacity 150ms ease;
+      }
+
+      .btn:hover,
+      .btn:focus-visible {
+        transform: translateY(-1px);
+        border-color: rgba(99, 215, 255, 0.32);
+        background: rgba(255, 255, 255, 0.08);
+        outline: none;
+      }
+
+      .btn.primary {
+        background: linear-gradient(135deg, rgba(99, 215, 255, 0.2), rgba(120, 243, 197, 0.15));
+        border-color: rgba(99, 215, 255, 0.34);
+      }
+
+      .btn.warn {
+        border-color: rgba(255, 191, 105, 0.34);
+        background: rgba(255, 191, 105, 0.1);
+      }
+
+      .btn.danger {
+        border-color: rgba(255, 123, 123, 0.34);
+        background: rgba(255, 123, 123, 0.1);
+      }
+
+      .btn.ghost {
+        background: transparent;
+      }
+
+      .btn.tiny {
+        min-height: 34px;
+        padding: 0 10px;
+        border-radius: 12px;
+        font-size: 0.84rem;
+      }
+
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .hero {
+        margin-top: 16px;
+        padding: 28px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.95fr);
+        gap: 18px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(120deg, rgba(255, 255, 255, 0.06), transparent 34%),
+          radial-gradient(circle at 84% 18%, rgba(99, 215, 255, 0.18), transparent 12rem);
+        pointer-events: none;
+      }
+
+      .hero h2 {
+        font-size: clamp(2.2rem, 4.8vw, 4.3rem);
+        line-height: 0.95;
+        letter-spacing: -0.05em;
+        max-width: 10ch;
+      }
+
+      .hero p {
+        color: var(--muted);
+      }
+
+      .hero-copy > p {
+        max-width: 64ch;
+        margin-top: 14px;
+        line-height: 1.68;
+        font-size: 1rem;
+      }
+
+      .hero-actions {
+        margin-top: 22px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .hero-side {
+        display: grid;
+        gap: 14px;
+        align-content: start;
+      }
+
+      .hero-card {
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.04);
+        padding: 18px;
+      }
+
+      .hero-kpis {
+        display: grid;
+        gap: 12px;
+      }
+
+      .hero-kpis .kpi-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .hero-kpis .kpi-row span {
         color: var(--muted);
         font-size: 0.9rem;
-        text-align: right;
       }
 
-      .summary-grid {
+      .hero-kpis .kpi-row strong {
+        text-align: right;
+        font-size: 0.95rem;
+      }
+
+      .stats-grid {
         margin-top: 18px;
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+        grid-template-columns: repeat(7, minmax(0, 1fr));
         gap: 14px;
       }
 
@@ -243,63 +385,68 @@
         padding: 18px;
         border-radius: var(--radius-md);
         border: 1px solid var(--line);
-        background: linear-gradient(180deg, rgba(11, 24, 30, 0.88), rgba(8, 20, 26, 0.72));
+        background: linear-gradient(180deg, rgba(11, 22, 31, 0.92), rgba(9, 18, 26, 0.78));
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
       }
 
       .summary-card .label {
         display: block;
-        font-size: 0.82rem;
-        letter-spacing: 0.08em;
+        font-size: 0.78rem;
         text-transform: uppercase;
+        letter-spacing: 0.12em;
         color: var(--muted);
       }
 
       .summary-card .value {
         margin-top: 12px;
-        font-size: clamp(1.4rem, 3vw, 2rem);
-        font-weight: 700;
+        font-size: clamp(1.35rem, 2.2vw, 2rem);
+        line-height: 1;
+        font-weight: 800;
         letter-spacing: -0.04em;
       }
 
       .summary-card .sub {
-        margin-top: 6px;
+        margin-top: 8px;
         color: var(--muted);
         font-size: 0.88rem;
+        line-height: 1.5;
       }
 
-      .layout {
+      .workspace {
         margin-top: 18px;
         display: grid;
-        grid-template-columns: minmax(0, 1.5fr) minmax(340px, 0.95fr);
+        grid-template-columns: minmax(0, 1.48fr) minmax(390px, 0.95fr);
         gap: 18px;
         align-items: start;
       }
 
-      .fleet-panel,
-      .detail-panel,
-      .playbook {
-        border-radius: var(--radius-xl);
-        border: 1px solid var(--line);
-        background: linear-gradient(180deg, rgba(9, 20, 26, 0.94), rgba(8, 18, 24, 0.84));
-        box-shadow: var(--shadow);
+      .side-stack {
+        display: grid;
+        gap: 18px;
+        position: sticky;
+        top: 88px;
       }
 
-      .panel-title {
+      .panel-head {
         padding: 22px 22px 0;
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 14px;
+        gap: 12px;
       }
 
-      .panel-title p {
+      .panel-head h2 {
+        font-size: 1.14rem;
+        letter-spacing: -0.02em;
+      }
+
+      .panel-head p {
         margin-top: 6px;
         color: var(--muted);
         line-height: 1.5;
       }
 
-      .panel-tag {
+      .panel-chip {
         flex-shrink: 0;
         padding: 8px 12px;
         border-radius: 999px;
@@ -309,60 +456,230 @@
         font-size: 0.84rem;
       }
 
-      .fleet-grid {
-        padding: 20px;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
-        gap: 14px;
-      }
-
-      .fleet-card {
-        position: relative;
-        padding: 18px;
-        border-radius: 22px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
-          rgba(255, 255, 255, 0.02);
-        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
-        cursor: pointer;
-      }
-
-      .fleet-card:hover,
-      .fleet-card:focus-visible {
-        transform: translateY(-2px);
-        border-color: rgba(120, 215, 255, 0.34);
-        box-shadow: 0 20px 44px rgba(0, 0, 0, 0.25);
-        outline: none;
-      }
-
-      .fleet-card.selected {
-        border-color: rgba(120, 215, 255, 0.5);
-        box-shadow: 0 24px 58px rgba(9, 27, 35, 0.42), inset 0 0 0 1px rgba(120, 215, 255, 0.2);
-      }
-
-      .fleet-card-top {
+      .panel-tools {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.045);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px 14px;
+        outline: none;
+        transition: border-color 150ms ease, background 150ms ease;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: rgba(99, 215, 255, 0.38);
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      .fleet-panel {
+        min-height: 70vh;
+      }
+
+      .fleet-toolbar {
+        padding: 18px 22px 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 180px auto;
         gap: 10px;
       }
 
-      .status-badge,
-      .detail-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 7px 11px;
-        border-radius: 999px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
+      .fleet-meta {
+        padding: 12px 22px 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .fleet-list {
+        padding: 18px 22px 22px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .fleet-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1.7fr) repeat(4, minmax(115px, 0.72fr)) minmax(220px, 1fr);
+        gap: 14px;
+        align-items: start;
+        padding: 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+          rgba(255, 255, 255, 0.02);
+        transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+      }
+
+      .fleet-row:hover,
+      .fleet-row:focus-within {
+        transform: translateY(-1px);
+        border-color: rgba(99, 215, 255, 0.26);
+        box-shadow: 0 20px 44px rgba(0, 0, 0, 0.2);
+      }
+
+      .fleet-row.selected {
+        border-color: rgba(99, 215, 255, 0.42);
+        box-shadow: 0 22px 54px rgba(9, 27, 35, 0.32), inset 0 0 0 1px rgba(99, 215, 255, 0.12);
+      }
+
+      .segment-label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
       }
 
-      .status-badge::before,
-      .detail-badge::before {
+      .row-app {
+        min-width: 0;
+        cursor: pointer;
+      }
+
+      .row-app-button {
+        width: 100%;
+        padding: 0;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .app-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        flex-shrink: 0;
+        background: var(--muted);
+      }
+
+      .status-dot.online {
+        background: var(--ok);
+        box-shadow: 0 0 0 4px rgba(98, 224, 163, 0.14);
+      }
+
+      .status-dot.launching,
+      .status-dot.stopping {
+        background: var(--warn);
+        box-shadow: 0 0 0 4px rgba(255, 191, 105, 0.12);
+      }
+
+      .status-dot.stopped,
+      .status-dot.errored {
+        background: var(--bad);
+        box-shadow: 0 0 0 4px rgba(255, 123, 123, 0.12);
+      }
+
+      .app-title strong {
+        display: block;
+        font-size: 1rem;
+        letter-spacing: -0.02em;
+      }
+
+      .app-title small {
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .script-line {
+        margin-top: 8px;
+        color: #cfe0ea;
+        font-size: 0.92rem;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+      }
+
+      .tag-row {
+        margin-top: 12px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .mini-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .metric-value {
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      .metric-sub {
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.4;
+      }
+
+      .meter {
+        margin-top: 8px;
+        width: 100%;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+      }
+
+      .meter > span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, rgba(99, 215, 255, 0.8), rgba(120, 243, 197, 0.8));
+      }
+
+      .row-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 0.76rem;
+        font-weight: 700;
+      }
+
+      .status-badge::before {
         content: "";
         width: 8px;
         height: 8px;
@@ -370,354 +687,424 @@
         background: currentColor;
       }
 
-      .status-online,
-      .detail-online {
+      .status-online {
         color: var(--ok);
-        background: rgba(100, 227, 158, 0.12);
-        border: 1px solid rgba(100, 227, 158, 0.24);
+        border: 1px solid rgba(98, 224, 163, 0.22);
+        background: rgba(98, 224, 163, 0.1);
       }
 
       .status-launching,
-      .status-stopping,
-      .detail-launching,
-      .detail-stopping {
+      .status-stopping {
         color: var(--warn);
-        background: rgba(255, 193, 108, 0.12);
-        border: 1px solid rgba(255, 193, 108, 0.24);
+        border: 1px solid rgba(255, 191, 105, 0.24);
+        background: rgba(255, 191, 105, 0.12);
       }
 
-      .status-errored,
       .status-stopped,
-      .detail-errored,
-      .detail-stopped {
+      .status-errored {
         color: var(--bad);
-        background: rgba(255, 123, 107, 0.12);
-        border: 1px solid rgba(255, 123, 107, 0.26);
+        border: 1px solid rgba(255, 123, 123, 0.24);
+        background: rgba(255, 123, 123, 0.1);
       }
 
-      .fleet-id {
-        color: var(--muted);
-        font-size: 0.84rem;
+      .inspector-content,
+      .launch-form,
+      .activity-feed {
+        padding: 18px 22px 22px;
       }
 
-      .fleet-card h3 {
-        margin-top: 16px;
-        font-size: 1.25rem;
-        letter-spacing: -0.03em;
-      }
-
-      .fleet-script {
-        margin-top: 8px;
-        color: var(--muted);
-        line-height: 1.5;
-        min-height: 3rem;
-      }
-
-      .meta-row {
-        margin-top: 14px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .meta-pill {
-        padding: 7px 10px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.05);
-        color: var(--muted);
-        font-size: 0.8rem;
-      }
-
-      .meters {
-        margin-top: 18px;
-        display: grid;
-        gap: 12px;
-      }
-
-      .meter-row {
-        display: grid;
-        gap: 8px;
-      }
-
-      .meter-head {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 12px;
-        font-size: 0.9rem;
-      }
-
-      .meter-head span:first-child {
-        color: var(--muted);
-      }
-
-      .meter-track {
-        height: 8px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.06);
-        overflow: hidden;
-      }
-
-      .meter-fill {
-        height: 100%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
-        width: 0%;
-        transition: width 220ms ease;
-      }
-
-      .meter-fill.warn {
-        background: linear-gradient(90deg, #ffcf82, #ffac5f);
-      }
-
-      .meter-fill.bad {
-        background: linear-gradient(90deg, #ff9388, #ff6b6b);
-      }
-
-      .detail-panel {
-        padding: 24px;
-        position: sticky;
-        top: 18px;
-      }
-
-      .detail-shell {
-        display: grid;
-        gap: 18px;
+      .detail-hero {
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+          rgba(255, 255, 255, 0.02);
       }
 
       .detail-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        align-items: flex-start;
-      }
-
-      .detail-top h2 {
-        font-size: clamp(1.8rem, 4vw, 2.8rem);
-        letter-spacing: -0.05em;
-      }
-
-      .detail-top p {
-        margin-top: 10px;
-        color: var(--muted);
-        line-height: 1.5;
-      }
-
-      .detail-actions {
-        display: grid;
-        gap: 10px;
-        justify-items: end;
-      }
-
-      .ghost-badge {
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        color: var(--muted);
-        font-size: 0.82rem;
-      }
-
-      .detail-stats {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-      }
-
-      .detail-stat {
-        padding: 14px;
-        border-radius: 18px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(255, 255, 255, 0.03);
-      }
-
-      .detail-stat .label {
-        color: var(--muted);
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }
-
-      .detail-stat strong {
-        display: block;
-        margin-top: 10px;
-        font-size: 1.18rem;
-        letter-spacing: -0.03em;
-      }
-
-      .detail-stat small {
-        display: block;
-        margin-top: 6px;
-        color: var(--muted);
-        font-size: 0.82rem;
-      }
-
-      .chart-panel,
-      .detail-list,
-      .playbook {
-        padding: 18px;
-      }
-
-      .chart-panel,
-      .detail-list {
-        border-radius: 22px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(255, 255, 255, 0.03);
-      }
-
-      .chart-head {
         display: flex;
         justify-content: space-between;
         gap: 14px;
         align-items: flex-start;
       }
 
-      .chart-head p {
-        margin-top: 6px;
-        color: var(--muted);
+      .detail-top h3 {
+        font-size: 1.35rem;
+        letter-spacing: -0.03em;
       }
 
-      .legend {
+      .detail-meta {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 0.94rem;
+        line-height: 1.65;
+        word-break: break-word;
+      }
+
+      .detail-actions {
+        margin-top: 18px;
         display: flex;
+        gap: 8px;
         flex-wrap: wrap;
+      }
+
+      .stat-strip {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 10px;
       }
 
-      .legend span {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
+      .stat-card {
+        padding: 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .stat-card .label {
+        display: block;
         color: var(--muted);
-        font-size: 0.82rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
       }
 
-      .legend span::before {
-        content: "";
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        background: currentColor;
+      .stat-card strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 1.1rem;
+        letter-spacing: -0.03em;
       }
 
-      .legend .rss {
-        color: var(--accent);
+      .stat-card small {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        line-height: 1.4;
       }
 
-      .legend .heap {
-        color: var(--accent-2);
-      }
-
-      .spark-wrap {
-        margin-top: 16px;
+      .subpanel {
+        margin-top: 14px;
+        padding: 18px;
         border-radius: 18px;
-        overflow: hidden;
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
-          rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
       }
 
-      svg {
+      .subpanel-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 14px;
+      }
+
+      .subpanel-head p {
+        margin-top: 6px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .chart-wrap {
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+        min-height: 244px;
+      }
+
+      .chart-wrap svg {
         display: block;
         width: 100%;
         height: auto;
       }
 
-      .detail-list {
+      .manage-grid {
         display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 12px;
       }
 
-      .detail-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      }
-
-      .detail-row:last-child {
-        padding-bottom: 0;
-        border-bottom: 0;
-      }
-
-      .detail-row .key {
-        color: var(--muted);
-      }
-
-      .detail-row .val {
-        text-align: right;
-        max-width: 60%;
-        word-break: break-word;
-      }
-
-      .empty-state {
-        min-height: 32rem;
-        display: grid;
-        place-items: center;
-        text-align: center;
-        color: var(--muted);
-      }
-
-      .empty-state strong {
-        display: block;
-        margin-bottom: 12px;
-        color: var(--text);
-        font-size: 1.2rem;
-      }
-
-      .playbook {
-        margin-top: 18px;
-      }
-
-      .playbook-grid {
-        margin-top: 14px;
+      .mini-form {
         display: grid;
         gap: 10px;
       }
 
-      .playbook-item {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 13px 14px;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+      .mini-form label,
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .mini-form label span,
+      .field span {
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .mini-form .btn {
+        width: 100%;
+      }
+
+      .kv-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .kv-row {
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
         background: rgba(255, 255, 255, 0.03);
       }
 
-      .muted {
+      .kv-row.wide {
+        grid-column: 1 / -1;
+      }
+
+      .kv-row .label {
+        display: block;
         color: var(--muted);
+        font-size: 0.74rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
       }
 
-      .source-demo {
-        color: var(--warn);
+      .kv-row .value {
+        line-height: 1.55;
+        color: var(--text);
+        word-break: break-word;
       }
 
-      .source-live {
-        color: var(--ok);
+      .kv-row code {
+        white-space: pre-wrap;
+        color: var(--accent);
       }
 
-      .source-offline {
-        color: var(--bad);
+      .log-toolbar {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .log-toolbar select {
+        width: auto;
+        min-width: 110px;
+      }
+
+      .log-output {
+        margin: 0;
+        max-height: 280px;
+        overflow: auto;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.32);
+        padding: 14px;
+        color: #d8f3ff;
+        font-size: 0.84rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .log-meta {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .launch-form {
+        display: grid;
+        gap: 14px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .field.full,
+      .advanced.full {
+        grid-column: 1 / -1;
+      }
+
+      .field.checkbox {
+        align-content: end;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.04);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .field.checkbox input {
+        width: auto;
+        accent-color: var(--accent);
+      }
+
+      .advanced {
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 14px;
+      }
+
+      .advanced summary {
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .advanced-grid {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .form-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .activity-feed {
+        display: grid;
+        gap: 10px;
+      }
+
+      .activity-item {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .activity-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        margin-top: 5px;
+      }
+
+      .activity-dot.info {
+        background: var(--accent);
+      }
+
+      .activity-dot.success {
+        background: var(--ok);
+      }
+
+      .activity-dot.error {
+        background: var(--bad);
+      }
+
+      .activity-main strong {
+        display: block;
+        font-size: 0.95rem;
+      }
+
+      .activity-main p {
+        margin-top: 5px;
+        font-size: 0.86rem;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .activity-time {
+        color: var(--muted);
+        font-size: 0.8rem;
+        white-space: nowrap;
+      }
+
+      .empty-state {
+        padding: 28px;
+        border-radius: 18px;
+        border: 1px dashed rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.025);
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.65;
+      }
+
+      .empty-state strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text);
+      }
+
+      .toast-stack {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        display: grid;
+        gap: 10px;
+        z-index: 50;
+      }
+
+      .toast {
+        min-width: 260px;
+        max-width: 360px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(10, 19, 27, 0.96);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+        animation: slideUp 180ms ease;
+      }
+
+      .toast.success {
+        border-color: rgba(98, 224, 163, 0.28);
+      }
+
+      .toast.error {
+        border-color: rgba(255, 123, 123, 0.3);
+      }
+
+      .toast.info {
+        border-color: rgba(99, 215, 255, 0.28);
+      }
+
+      .toast strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .toast p {
+        color: var(--muted);
+        line-height: 1.45;
+        font-size: 0.9rem;
       }
 
       @keyframes pulse {
         0% {
-          box-shadow: 0 0 0 0 rgba(100, 227, 158, 0.48);
+          box-shadow: 0 0 0 0 rgba(98, 224, 163, 0.42);
         }
         70% {
-          box-shadow: 0 0 0 12px rgba(100, 227, 158, 0);
+          box-shadow: 0 0 0 10px rgba(98, 224, 163, 0);
         }
         100% {
-          box-shadow: 0 0 0 0 rgba(100, 227, 158, 0);
+          box-shadow: 0 0 0 0 rgba(98, 224, 163, 0);
         }
       }
 
-      @keyframes rise {
+      @keyframes slideUp {
         from {
           opacity: 0;
-          transform: translateY(10px);
+          transform: translateY(8px);
         }
         to {
           opacity: 1;
@@ -725,710 +1112,1541 @@
         }
       }
 
-      @media (max-width: 1160px) {
-        .summary-grid {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+      @media (max-width: 1460px) {
+        .stats-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
         }
 
-        .layout {
+        .fleet-row {
+          grid-template-columns: minmax(0, 1.4fr) repeat(4, minmax(100px, 0.72fr));
+        }
+
+        .row-actions {
+          grid-column: 1 / -1;
+          justify-content: flex-start;
+        }
+      }
+
+      @media (max-width: 1180px) {
+        .workspace,
+        .hero {
           grid-template-columns: 1fr;
         }
 
-        .detail-panel {
+        .side-stack {
           position: static;
         }
       }
 
-      @media (max-width: 820px) {
-        main {
-          width: min(100%, calc(100% - 20px));
-          padding-top: 18px;
+      @media (max-width: 900px) {
+        .fleet-toolbar,
+        .form-grid,
+        .advanced-grid,
+        .manage-grid,
+        .kv-grid,
+        .stat-strip,
+        .stats-grid {
+          grid-template-columns: 1fr 1fr;
         }
 
-        .hero {
-          grid-template-columns: 1fr;
-          padding: 24px;
+        .fleet-row {
+          grid-template-columns: 1fr 1fr;
         }
 
-        .summary-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .fleet-grid {
-          grid-template-columns: 1fr;
-          padding: 16px;
-        }
-
-        .detail-panel {
-          padding: 18px;
+        .row-actions {
+          grid-column: 1 / -1;
         }
       }
 
-      @media (max-width: 560px) {
-        .summary-grid,
-        .detail-stats {
+      @media (max-width: 720px) {
+        .app-shell {
+          width: min(100%, calc(100% - 18px));
+        }
+
+        .topbar,
+        .hero,
+        .panel-head,
+        .fleet-list,
+        .inspector-content,
+        .launch-form,
+        .activity-feed {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        .topbar {
+          padding-top: 16px;
+          padding-bottom: 16px;
+        }
+
+        .panel-head {
+          padding-top: 18px;
+        }
+
+        .fleet-toolbar {
+          padding: 16px 16px 0;
           grid-template-columns: 1fr;
         }
 
-        .panel-title,
-        .detail-top,
-        .chart-head,
-        .playbook-item,
-        .command-chip,
-        .detail-row {
-          display: grid;
+        .fleet-meta {
+          padding: 10px 16px 0;
         }
 
-        .detail-actions {
-          justify-items: start;
+        .fleet-row,
+        .stats-grid,
+        .form-grid,
+        .advanced-grid,
+        .manage-grid,
+        .kv-grid,
+        .stat-strip {
+          grid-template-columns: 1fr;
+        }
+
+        .detail-top,
+        .panel-head,
+        .subpanel-head,
+        .topbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .topbar-controls,
+        .panel-tools,
+        .hero-actions,
+        .log-toolbar,
+        .form-actions {
+          justify-content: flex-start;
         }
       }
     </style>
   </head>
   <body>
-    <main>
-      <section class="hero">
-        <div>
-          <p class="eyebrow">buncore control room</p>
-          <h1>Operate your Bun fleet without squinting.</h1>
-          <p class="lead">
-            Live process health, restart pressure, watcher posture, memory curves, and quick terminal context in one polished operator view.
-          </p>
+    <div class="app-shell">
+      <header class="topbar panel-surface">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div>
+            <p class="eyebrow">Buncore Dashboard</p>
+            <h1>Professional Command Center</h1>
+          </div>
         </div>
 
-        <div class="hero-rail">
-          <section class="glass live-card">
-            <div class="live-pill">Live telemetry</div>
-            <div class="live-meta">
-              <div>Data source: <strong id="sourceLabel" class="source-live">live daemon</strong></div>
-              <div>Last refresh: <strong id="updatedHero">waiting...</strong></div>
-              <div>Selected process: <strong id="selectedHero">none</strong></div>
-            </div>
-          </section>
+        <div class="topbar-controls">
+          <div id="connectionPill" class="live-pill">
+            <span id="connectionText">Live API</span>
+          </div>
+          <span id="lastUpdatedText" class="subtle-text">Henüz veri yok</span>
+          <label class="toggle">
+            <input id="autoRefreshToggle" type="checkbox" checked />
+            Otomatik yenile
+          </label>
+          <button id="refreshBtn" class="btn">Yenile</button>
+          <button id="saveBtn" class="btn">Kaydet</button>
+          <button id="resurrectBtn" class="btn">Geri Yükle</button>
+          <button id="launcherToggleBtn" class="btn primary">Yeni Process</button>
+        </div>
+      </header>
 
-          <section class="glass quick-card">
-            <h2>Quick terminal handoff</h2>
-            <div class="command-grid">
-              <div class="command-chip">
-                <code>buncore monit</code>
-                <span>live terminal monitor</span>
-              </div>
-              <div class="command-chip">
-                <code>buncore info &lt;name&gt;</code>
-                <span>deep runtime detail</span>
-              </div>
-              <div class="command-chip">
-                <code>buncore logs &lt;name&gt; --follow</code>
-                <span>annotated log stream</span>
-              </div>
+      <section class="hero panel-surface">
+        <div class="hero-copy">
+          <p class="eyebrow">Realtime Control Surface</p>
+          <h2>Fleet’i tek panelden başlat, durdur, yönet.</h2>
+          <p>
+            Bu yeni dashboard; canlı process listesi, hızlı aksiyon butonları, detaylı inceleme,
+            log takibi, sinyal gönderme, scale yönetimi ve yeni process başlatma formunu tek ekranda toplar.
+          </p>
+          <div class="hero-actions">
+            <button class="btn ghost" data-global-action="restart" data-target="all">Tümünü Restart</button>
+            <button class="btn warn" data-global-action="stop" data-target="all">Tümünü Durdur</button>
+            <button class="btn ghost" data-global-action="flush" data-target="all">Logları Temizle</button>
+          </div>
+        </div>
+
+        <div class="hero-side">
+          <div class="hero-card hero-kpis">
+            <div class="kpi-row">
+              <span>Dashboard Host</span>
+              <strong id="heroHost">—</strong>
             </div>
-          </section>
+            <div class="kpi-row">
+              <span>Seçili Process</span>
+              <strong id="heroSelected">—</strong>
+            </div>
+            <div class="kpi-row">
+              <span>Bağlantı Modu</span>
+              <strong id="heroMode">Live API</strong>
+            </div>
+          </div>
+
+          <div class="hero-card">
+            <p class="eyebrow" style="margin-bottom: 10px">Operasyon Notu</p>
+            <p>
+              Sağ panelden seçili process üzerinde restart, reload, stop, delete, flush, reset,
+              scale ve signal komutlarını çalıştırabilir; alt formdan ise sıfırdan yeni process ekleyebilirsin.
+            </p>
+          </div>
         </div>
       </section>
 
-      <section class="summary-grid" id="summaryGrid">
+      <section class="stats-grid">
         <article class="summary-card">
-          <span class="label">Processes</span>
-          <div class="value" id="sumCount">0</div>
-          <div class="sub">managed services</div>
+          <span class="label">Toplam Process</span>
+          <div id="sumTotal" class="value">0</div>
+          <div class="sub">Aktif panelde görünen tüm managed process sayısı</div>
         </article>
         <article class="summary-card">
           <span class="label">Online</span>
-          <div class="value" id="sumOnline">0</div>
-          <div class="sub">healthy runtime count</div>
+          <div id="sumOnline" class="value">0</div>
+          <div class="sub">Şu anda canlı çalışan process adedi</div>
         </article>
         <article class="summary-card">
-          <span class="label">Alerts</span>
-          <div class="value" id="sumAlerts">0</div>
-          <div class="sub">errored or stopped</div>
+          <span class="label">Uyarılar</span>
+          <div id="sumAlerts" class="value">0</div>
+          <div class="sub">Errored, stopping veya restart baskısı taşıyanlar</div>
         </article>
         <article class="summary-card">
-          <span class="label">Total CPU</span>
-          <div class="value" id="sumCpu">0.0%</div>
-          <div class="sub">aggregate pressure</div>
+          <span class="label">Gruplar</span>
+          <div id="sumGroups" class="value">0</div>
+          <div class="sub">Base isim bazında benzersiz service grubu</div>
         </article>
         <article class="summary-card">
-          <span class="label">Total RSS</span>
-          <div class="value" id="sumRss">0 B</div>
-          <div class="sub">resident memory</div>
+          <span class="label">Toplam CPU</span>
+          <div id="sumCpu" class="value">0%</div>
+          <div class="sub">Anlık CPU tüketiminin toplam görünümü</div>
+        </article>
+        <article class="summary-card">
+          <span class="label">Toplam RSS</span>
+          <div id="sumRss" class="value">0 B</div>
+          <div class="sub">Fleet genel resident memory kullanımı</div>
         </article>
         <article class="summary-card">
           <span class="label">Watch Enabled</span>
-          <div class="value" id="sumWatch">0</div>
-          <div class="sub">auto-restart sources</div>
+          <div id="sumWatch" class="value">0</div>
+          <div class="sub">Dosya değişimini izleyen process sayısı</div>
         </article>
       </section>
 
-      <section class="layout">
-        <section class="fleet-panel">
-          <div class="panel-title">
+      <section class="workspace">
+        <section class="fleet-panel panel-surface">
+          <div class="panel-head">
             <div>
-              <h2>Fleet overview</h2>
-              <p>Every process rendered as an operational card instead of a cramped table.</p>
+              <p class="eyebrow">Fleet</p>
+              <h2>Process listesi ve hızlı aksiyonlar</h2>
+              <p>Satır üzerindeki butonlarla hızlı yönetim yapabilir, karta tıklayarak detay panelini doldurabilirsin.</p>
             </div>
-            <div class="panel-tag" id="fleetTag">waiting for data</div>
+            <div class="panel-chip" id="fleetMeta">0/0 process</div>
           </div>
-          <div class="fleet-grid" id="fleetGrid"></div>
+
+          <div class="fleet-toolbar">
+            <input id="searchInput" type="search" placeholder="İsim, script veya cwd ara..." />
+            <select id="statusFilter">
+              <option value="all">Tüm durumlar</option>
+              <option value="online">Online</option>
+              <option value="launching">Launching</option>
+              <option value="stopping">Stopping</option>
+              <option value="stopped">Stopped</option>
+              <option value="errored">Errored</option>
+            </select>
+            <button id="clearFiltersBtn" class="btn ghost">Filtreleri Temizle</button>
+          </div>
+
+          <div id="fleetList" class="fleet-list"></div>
         </section>
 
-        <aside class="detail-panel" id="detailPanel"></aside>
-      </section>
+        <aside class="side-stack">
+          <section class="panel-surface">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Inspector</p>
+                <h2>Seçili process detayları</h2>
+                <p>Kaynak kullanımı, lifecycle, config, log ve yönetim komutları.</p>
+              </div>
+              <div id="selectedBaseText" class="panel-chip">Seçim yok</div>
+            </div>
+            <div id="inspectorContent" class="inspector-content"></div>
+          </section>
 
-      <section class="playbook">
-        <div class="panel-title" style="padding: 0;">
-          <div>
-            <h2>Command playbook</h2>
-            <p>Dashboard and terminal now share the same mental model for every operational step.</p>
-          </div>
-          <div class="panel-tag">Operator flow</div>
-        </div>
-        <div class="playbook-grid" id="playbookGrid"></div>
+          <section id="launcherPanel" class="panel-surface">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Launcher</p>
+                <h2>Yeni process başlat</h2>
+                <p>Dashboard üzerinden name, script, env, watch, scale ve restart davranışlarını tanımlayabilirsin.</p>
+              </div>
+              <div class="panel-chip">Web Action API</div>
+            </div>
+
+            <form id="launcherForm" class="launch-form">
+              <div class="form-grid">
+                <label class="field">
+                  <span>Process adı</span>
+                  <input id="launchName" name="name" required placeholder="api" />
+                </label>
+
+                <label class="field">
+                  <span>Script / giriş dosyası</span>
+                  <input id="launchScript" name="script" required placeholder="server.ts" />
+                </label>
+
+                <label class="field">
+                  <span>Çalışma dizini</span>
+                  <input id="launchCwd" name="cwd" value="." placeholder="." />
+                </label>
+
+                <label class="field">
+                  <span>Interpreter</span>
+                  <input id="launchInterpreter" name="interpreter" placeholder="bun | node | deno" />
+                </label>
+
+                <label class="field">
+                  <span>Instances</span>
+                  <input id="launchInstances" name="instances" type="number" min="1" value="1" />
+                </label>
+
+                <label class="field">
+                  <span>Exec mode</span>
+                  <select id="launchExecMode" name="execMode">
+                    <option value="">Auto</option>
+                    <option value="fork">fork</option>
+                    <option value="cluster">cluster</option>
+                  </select>
+                </label>
+
+                <label class="field checkbox">
+                  <span>Watch mode</span>
+                  <input id="launchWatch" name="watch" type="checkbox" />
+                </label>
+
+                <label class="field checkbox">
+                  <span>Autorestart</span>
+                  <input id="launchAutorestart" name="autorestart" type="checkbox" checked />
+                </label>
+
+                <label class="field full">
+                  <span>Argümanlar</span>
+                  <textarea id="launchArgs" name="args" placeholder="Her satıra bir argüman yaz"></textarea>
+                </label>
+
+                <label class="field full">
+                  <span>Environment Variables</span>
+                  <textarea id="launchEnvPairs" name="envPairs" placeholder="PORT=3000&#10;NODE_ENV=production"></textarea>
+                </label>
+
+                <details class="advanced full">
+                  <summary>Gelişmiş ayarlar</summary>
+                  <div class="advanced-grid">
+                    <label class="field">
+                      <span>Watch path</span>
+                      <input id="launchWatchPath" name="watchPath" placeholder="src" />
+                    </label>
+
+                    <label class="field">
+                      <span>Ignore watch</span>
+                      <textarea id="launchIgnoreWatch" name="ignoreWatch" placeholder="node_modules&#10;dist"></textarea>
+                    </label>
+
+                    <label class="field">
+                      <span>Max memory restart (MB)</span>
+                      <input id="launchMaxMemoryMb" name="maxMemoryMb" type="number" min="0" placeholder="512" />
+                    </label>
+
+                    <label class="field">
+                      <span>Max restarts</span>
+                      <input id="launchMaxRestarts" name="maxRestarts" type="number" min="0" value="15" />
+                    </label>
+
+                    <label class="field">
+                      <span>Min uptime (ms)</span>
+                      <input id="launchMinUptime" name="minUptime" type="number" min="0" value="1000" />
+                    </label>
+
+                    <label class="field">
+                      <span>Restart delay (ms)</span>
+                      <input id="launchRestartDelay" name="restartDelay" type="number" min="0" value="100" />
+                    </label>
+
+                    <label class="field">
+                      <span>Exp backoff delay (ms)</span>
+                      <input id="launchExpBackoffRestartDelay" name="expBackoffRestartDelay" type="number" min="0" value="0" />
+                    </label>
+
+                    <label class="field">
+                      <span>Cron restart</span>
+                      <input id="launchCronRestart" name="cronRestart" placeholder="0 0 * * *" />
+                    </label>
+
+                    <label class="field">
+                      <span>Stdout log path</span>
+                      <input id="launchOutFile" name="outFile" placeholder="logs/app.out.log" />
+                    </label>
+
+                    <label class="field">
+                      <span>Stderr log path</span>
+                      <input id="launchErrorFile" name="errorFile" placeholder="logs/app.err.log" />
+                    </label>
+
+                    <label class="field">
+                      <span>Max log size (MB)</span>
+                      <input id="launchMaxLogSizeMb" name="maxLogSizeMb" type="number" min="0" placeholder="50" />
+                    </label>
+
+                    <label class="field">
+                      <span>Kill timeout (ms)</span>
+                      <input id="launchKillTimeout" name="killTimeout" type="number" min="0" value="6000" />
+                    </label>
+                  </div>
+                </details>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn primary">Process Başlat</button>
+                <button id="launcherResetBtn" type="button" class="btn ghost">Formu Temizle</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel-surface">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Activity</p>
+                <h2>Son işlemler</h2>
+                <p>Dashboard üzerinden yapılan komutlar ve sistem bildirimleri burada görünür.</p>
+              </div>
+              <div class="panel-chip">Session Feed</div>
+            </div>
+            <div id="activityFeed" class="activity-feed"></div>
+          </section>
+        </aside>
       </section>
-    </main>
+    </div>
+
+    <div id="toastStack" class="toast-stack"></div>
 
     <script>
-      const demoProcesses = [
-        {
-          id: 1,
-          name: "api-gateway",
-          script: "./services/api.ts",
-          cwd: "/srv/apps/api",
-          status: "online",
-          pid: 4421,
-          createdAt: Date.now() - 1000 * 60 * 90,
-          startedAt: Date.now() - 1000 * 60 * 54,
-          stoppedAt: null,
-          restarts: 1,
-          unstableRestarts: 0,
-          lastExitCode: 0,
-          runtime: "bun",
-          platform: "linux",
-          watchEnabled: true,
-          watchStrategy: "inotify",
-          watchPreferredStrategy: "inotify",
-          summary: { cpuPercent: 18.6, rss: 184_000_000, heapUsed: 52_000_000, heapTotal: 96_000_000, runtimeLagMs: 6.4 },
-          details: { jscHeapStats: { heapSize: 108_000_000, objectCount: 25291 } }
-        },
-        {
-          id: 2,
-          name: "worker-mailer",
-          script: "./workers/mailer.ts",
-          cwd: "/srv/apps/api",
-          status: "launching",
-          pid: 4470,
-          createdAt: Date.now() - 1000 * 60 * 12,
-          startedAt: Date.now() - 1000 * 70,
-          stoppedAt: null,
-          restarts: 3,
-          unstableRestarts: 1,
-          lastExitCode: 1,
-          runtime: "bun",
-          platform: "linux",
-          watchEnabled: false,
-          watchStrategy: "inotify",
-          watchPreferredStrategy: "inotify",
-          summary: { cpuPercent: 62.4, rss: 132_000_000, heapUsed: 74_000_000, heapTotal: 112_000_000, runtimeLagMs: 41.2 },
-          details: { jscHeapStats: { heapSize: 119_000_000, objectCount: 38105 } }
-        },
-        {
-          id: 3,
-          name: "edge-cache",
-          script: "./services/cache.ts",
-          cwd: "/srv/apps/cache",
-          status: "errored",
-          pid: null,
-          createdAt: Date.now() - 1000 * 60 * 300,
-          startedAt: Date.now() - 1000 * 60 * 8,
-          stoppedAt: Date.now() - 1000 * 60 * 2,
-          restarts: 6,
-          unstableRestarts: 2,
-          lastExitCode: 137,
-          runtime: "bun",
-          platform: "linux",
-          watchEnabled: true,
-          watchStrategy: "inotify",
-          watchPreferredStrategy: "inotify",
-          summary: { cpuPercent: 0, rss: 64_000_000, heapUsed: 0, heapTotal: 0, runtimeLagMs: 0 },
-          details: { jscHeapStats: { heapSize: 0, objectCount: 0 } }
+      (() => {
+        const $ = (id) => document.getElementById(id);
+
+        const state = {
+          processes: [],
+          selectedId: null,
+          pendingSelect: null,
+          metrics: new Map(),
+          logs: new Map(),
+          activity: [],
+          search: "",
+          status: "all",
+          autoRefresh: true,
+          autoLogs: true,
+          logLines: 160,
+          lastUpdated: null,
+          apiHealthy: true,
+          offlineNotified: false,
+          refreshing: false,
+          loadingLogs: false,
+        };
+
+        const els = {
+          connectionPill: $("connectionPill"),
+          connectionText: $("connectionText"),
+          lastUpdatedText: $("lastUpdatedText"),
+          autoRefreshToggle: $("autoRefreshToggle"),
+          refreshBtn: $("refreshBtn"),
+          saveBtn: $("saveBtn"),
+          resurrectBtn: $("resurrectBtn"),
+          launcherToggleBtn: $("launcherToggleBtn"),
+          heroHost: $("heroHost"),
+          heroSelected: $("heroSelected"),
+          heroMode: $("heroMode"),
+          sumTotal: $("sumTotal"),
+          sumOnline: $("sumOnline"),
+          sumAlerts: $("sumAlerts"),
+          sumGroups: $("sumGroups"),
+          sumCpu: $("sumCpu"),
+          sumRss: $("sumRss"),
+          sumWatch: $("sumWatch"),
+          fleetMeta: $("fleetMeta"),
+          searchInput: $("searchInput"),
+          statusFilter: $("statusFilter"),
+          clearFiltersBtn: $("clearFiltersBtn"),
+          fleetList: $("fleetList"),
+          selectedBaseText: $("selectedBaseText"),
+          inspectorContent: $("inspectorContent"),
+          launcherPanel: $("launcherPanel"),
+          launcherForm: $("launcherForm"),
+          launcherResetBtn: $("launcherResetBtn"),
+          activityFeed: $("activityFeed"),
+          toastStack: $("toastStack"),
+          launchName: $("launchName"),
+          launchScript: $("launchScript"),
+          launchCwd: $("launchCwd"),
+          launchInterpreter: $("launchInterpreter"),
+          launchInstances: $("launchInstances"),
+          launchExecMode: $("launchExecMode"),
+          launchWatch: $("launchWatch"),
+          launchAutorestart: $("launchAutorestart"),
+          launchArgs: $("launchArgs"),
+          launchEnvPairs: $("launchEnvPairs"),
+          launchWatchPath: $("launchWatchPath"),
+          launchIgnoreWatch: $("launchIgnoreWatch"),
+          launchMaxMemoryMb: $("launchMaxMemoryMb"),
+          launchMaxRestarts: $("launchMaxRestarts"),
+          launchMinUptime: $("launchMinUptime"),
+          launchRestartDelay: $("launchRestartDelay"),
+          launchExpBackoffRestartDelay: $("launchExpBackoffRestartDelay"),
+          launchCronRestart: $("launchCronRestart"),
+          launchOutFile: $("launchOutFile"),
+          launchErrorFile: $("launchErrorFile"),
+          launchMaxLogSizeMb: $("launchMaxLogSizeMb"),
+          launchKillTimeout: $("launchKillTimeout"),
+        };
+
+        const statusLabels = {
+          online: "Çalışıyor",
+          launching: "Başlatılıyor",
+          stopping: "Durduruluyor",
+          stopped: "Durdu",
+          errored: "Hata",
+        };
+
+        const actionLabels = {
+          start: "Start",
+          stop: "Stop",
+          restart: "Restart",
+          reload: "Reload",
+          delete: "Delete",
+          flush: "Flush",
+          reset: "Reset",
+          scale: "Scale",
+          signal: "Signal",
+          save: "Save",
+          resurrect: "Resurrect",
+        };
+
+        function escapeHtml(value) {
+          return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
         }
-      ];
 
-      const demoMetrics = {
-        1: Array.from({ length: 12 }, (_, index) => ({
-          timestamp: Date.now() - (11 - index) * 15_000,
-          rss: 155_000_000 + index * 2_700_000,
-          heapUsed: 45_000_000 + index * 650_000,
-          heapTotal: 96_000_000
-        })),
-        2: Array.from({ length: 12 }, (_, index) => ({
-          timestamp: Date.now() - (11 - index) * 15_000,
-          rss: 118_000_000 + index * 1_100_000,
-          heapUsed: 61_000_000 + index * 1_050_000,
-          heapTotal: 112_000_000
-        })),
-        3: Array.from({ length: 12 }, (_, index) => ({
-          timestamp: Date.now() - (11 - index) * 15_000,
-          rss: 92_000_000 - index * 2_100_000,
-          heapUsed: 14_000_000 - index * 900_000,
-          heapTotal: 80_000_000
-        }))
-      };
-
-      const playbook = [
-        ["buncore list", "fleet snapshot with CPU, RAM, heap, and restarts"],
-        ["buncore monit", "continuous terminal monitor for the same live fleet"],
-        ["buncore info <name>", "deep runtime, lifecycle, and watcher profile"],
-        ["buncore logs <name> --follow", "annotated stdout/stderr stream"],
-        ["buncore dashboard", "print dashboard URL and metrics endpoints"],
-        ["buncore heap <name>", "capture a heap snapshot through the Bun agent"],
-        ["buncore profile <name> --duration 15", "collect a focused CPU profile"],
-        ["buncore save / resurrect", "persist and restore the managed fleet"]
-      ];
-
-      const statusRank = {
-        online: 0,
-        launching: 1,
-        stopping: 2,
-        errored: 3,
-        stopped: 4
-      };
-
-      const state = {
-        source: "live",
-        processes: [],
-        selectedId: null,
-        metrics: new Map()
-      };
-
-      const params = new URLSearchParams(location.search);
-      const demoMode = params.has("demo");
-
-      const els = {
-        sourceLabel: document.getElementById("sourceLabel"),
-        updatedHero: document.getElementById("updatedHero"),
-        selectedHero: document.getElementById("selectedHero"),
-        fleetTag: document.getElementById("fleetTag"),
-        fleetGrid: document.getElementById("fleetGrid"),
-        detailPanel: document.getElementById("detailPanel"),
-        playbookGrid: document.getElementById("playbookGrid"),
-        sumCount: document.getElementById("sumCount"),
-        sumOnline: document.getElementById("sumOnline"),
-        sumAlerts: document.getElementById("sumAlerts"),
-        sumCpu: document.getElementById("sumCpu"),
-        sumRss: document.getElementById("sumRss"),
-        sumWatch: document.getElementById("sumWatch")
-      };
-
-      const escapeHtml = (value) =>
-        String(value ?? "")
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#39;");
-
-      const fmtBytes = (bytes) => {
-        if (bytes == null || Number.isNaN(bytes)) return "n/a";
-        const units = ["B", "KB", "MB", "GB", "TB"];
-        let value = Number(bytes);
-        let index = 0;
-        while (value >= 1024 && index < units.length - 1) {
-          value /= 1024;
-          index += 1;
+        function clamp(value, min, max) {
+          return Math.min(Math.max(value, min), max);
         }
-        return `${value.toFixed(value >= 10 || index === 0 ? 1 : 2)} ${units[index]}`;
-      };
 
-      const fmtPercent = (value) => (value == null || Number.isNaN(value) ? "n/a" : `${Number(value).toFixed(1)}%`);
+        function parseIntOr(value, fallback) {
+          const parsed = Number.parseInt(String(value ?? "").trim(), 10);
+          return Number.isFinite(parsed) ? parsed : fallback;
+        }
 
-      const fmtLag = (value) => (value == null || Number.isNaN(value) ? "n/a" : `${Number(value).toFixed(2)} ms`);
+        function normalizeText(value) {
+          return String(value ?? "").toLocaleLowerCase("tr-TR");
+        }
 
-      const fmtClock = (ts) =>
-        ts
-          ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-          : "n/a";
+        function optionalString(value) {
+          const trimmed = String(value ?? "").trim();
+          return trimmed ? trimmed : undefined;
+        }
 
-      const fmtDateTime = (ts) =>
-        ts
-          ? new Date(ts).toLocaleString([], {
-              year: "numeric",
-              month: "short",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit"
-            })
-          : "n/a";
+        function splitListInput(value) {
+          return String(value ?? "")
+            .split(/\r?\n|,/)
+            .map((item) => item.trim())
+            .filter(Boolean);
+        }
 
-      const fmtDuration = (ms) => {
-        if (!ms || ms < 1000) return "0s";
-        const total = Math.floor(ms / 1000);
-        const days = Math.floor(total / 86400);
-        const hours = Math.floor((total % 86400) / 3600);
-        const minutes = Math.floor((total % 3600) / 60);
-        const seconds = total % 60;
-        if (days) return `${days}d ${hours}h`;
-        if (hours) return `${hours}h ${minutes}m`;
-        if (minutes) return `${minutes}m ${seconds}s`;
-        return `${seconds}s`;
-      };
+        function pruneObject(obj) {
+          return Object.fromEntries(
+            Object.entries(obj).filter(([, value]) => {
+              if (value === undefined || value === null) return false;
+              if (typeof value === "string" && value === "") return false;
+              return true;
+            }),
+          );
+        }
 
-      const runtimeWindow = (process) => {
-        if (!process?.startedAt) return "n/a";
-        const end = process.status === "online" ? Date.now() : process.stoppedAt ?? Date.now();
-        return fmtDuration(Math.max(end - process.startedAt, 0));
-      };
+        function mbToBytes(value) {
+          const amount = Number(String(value ?? "").trim());
+          if (!Number.isFinite(amount) || amount <= 0) return 0;
+          return Math.round(amount * 1024 * 1024);
+        }
 
-      const ago = (ts) => {
-        if (!ts) return "n/a";
-        const delta = Math.max(Date.now() - ts, 0);
-        return `${fmtDuration(delta)} ago`;
-      };
+        function bytesToMbInput(value) {
+          const bytes = Number(value ?? 0);
+          if (!Number.isFinite(bytes) || bytes <= 0) return "";
+          return String(Math.round(bytes / 1024 / 1024));
+        }
 
-      const meterTone = (ratio) => {
-        if (ratio >= 0.85) return "bad";
-        if (ratio >= 0.6) return "warn";
-        return "";
-      };
+        function fmtBytes(value) {
+          const num = Number(value ?? 0);
+          if (!Number.isFinite(num) || num <= 0) return "0 B";
+          const units = ["B", "KB", "MB", "GB", "TB"];
+          let size = num;
+          let unitIndex = 0;
+          while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex += 1;
+          }
+          const digits = size >= 100 ? 0 : size >= 10 ? 1 : 2;
+          return `${size.toFixed(digits)} ${units[unitIndex]}`;
+        }
 
-      const sortProcesses = (processes) =>
-        [...processes].sort((left, right) => {
-          const statusDelta = (statusRank[left.status] ?? 99) - (statusRank[right.status] ?? 99);
-          if (statusDelta !== 0) return statusDelta;
-          const cpuDelta = (right.summary?.cpuPercent ?? 0) - (left.summary?.cpuPercent ?? 0);
-          if (cpuDelta !== 0) return cpuDelta;
-          return String(left.name).localeCompare(String(right.name));
-        });
+        function fmtPercent(value) {
+          const num = Number(value ?? 0);
+          if (!Number.isFinite(num)) return "0%";
+          const digits = num >= 100 || Number.isInteger(num) ? 0 : 1;
+          return `${num.toFixed(digits)}%`;
+        }
 
-      const selectedProcess = () => state.processes.find((item) => String(item.id) === String(state.selectedId)) ?? null;
+        function fmtDateTime(value) {
+          const num = Number(value ?? 0);
+          if (!Number.isFinite(num) || num <= 0) return "—";
+          return new Date(num).toLocaleString("tr-TR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          });
+        }
 
-      function renderPlaybook() {
-        els.playbookGrid.innerHTML = playbook
-          .map(
-            ([command, summary]) => `
-              <div class="playbook-item">
-                <code>${escapeHtml(command)}</code>
-                <span>${escapeHtml(summary)}</span>
-              </div>
-            `
-          )
-          .join("");
-      }
+        function timeAgo(value) {
+          const num = Number(value ?? 0);
+          if (!Number.isFinite(num) || num <= 0) return "—";
+          const diff = Date.now() - num;
+          if (diff < 1000) return "az önce";
+          const units = [
+            ["gün", 86_400_000],
+            ["saat", 3_600_000],
+            ["dk", 60_000],
+            ["sn", 1000],
+          ];
+          for (const [label, size] of units) {
+            if (diff >= size) {
+              return `${Math.floor(diff / size)} ${label} önce`;
+            }
+          }
+          return "az önce";
+        }
 
-      function setSourceLabel(source) {
-        els.sourceLabel.textContent = source === "demo" ? "demo fallback" : source === "offline" ? "offline snapshot" : "live daemon";
-        els.sourceLabel.className = source === "demo" ? "source-demo" : source === "offline" ? "source-offline" : "source-live";
-      }
+        function durationBetween(start, end = Date.now()) {
+          const s = Number(start ?? 0);
+          const e = Number(end ?? 0);
+          if (!Number.isFinite(s) || s <= 0 || !Number.isFinite(e) || e <= 0 || e < s) return "—";
+          const totalSeconds = Math.floor((e - s) / 1000);
+          const days = Math.floor(totalSeconds / 86400);
+          const hours = Math.floor((totalSeconds % 86400) / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+          if (days > 0) return `${days}g ${hours}s`;
+          if (hours > 0) return `${hours}s ${minutes}dk`;
+          if (minutes > 0) return `${minutes}dk ${seconds}sn`;
+          return `${seconds}sn`;
+        }
 
-      function updateSummary(processes) {
-        const online = processes.filter((item) => item.status === "online").length;
-        const alerts = processes.filter((item) => ["errored", "stopped"].includes(item.status)).length;
-        const watch = processes.filter((item) => item.watchEnabled).length;
-        const totalCpu = processes.reduce((sum, item) => sum + Number(item.summary?.cpuPercent || 0), 0);
-        const totalRss = processes.reduce((sum, item) => sum + Number(item.summary?.rss || 0), 0);
+        function runtimeWindow(process) {
+          if (!process) return "—";
+          if (process.status === "online" || process.status === "launching") {
+            return durationBetween(process.startedAt || process.createdAt);
+          }
+          if (process.status === "stopped" || process.status === "errored") {
+            return `son görülme ${timeAgo(process.stoppedAt || process.createdAt)}`;
+          }
+          return durationBetween(process.startedAt || process.createdAt);
+        }
 
-        els.sumCount.textContent = String(processes.length);
-        els.sumOnline.textContent = String(online);
-        els.sumAlerts.textContent = String(alerts);
-        els.sumCpu.textContent = fmtPercent(totalCpu);
-        els.sumRss.textContent = fmtBytes(totalRss);
-        els.sumWatch.textContent = String(watch);
+        function statusRank(status) {
+          const ranks = { online: 0, launching: 1, stopping: 2, errored: 3, stopped: 4 };
+          return ranks[status] ?? 99;
+        }
 
-        els.updatedHero.textContent = fmtClock(Date.now());
-        els.fleetTag.textContent = processes.length ? `${online}/${processes.length} online` : "no managed processes";
-      }
+        function sortProcesses(processes) {
+          return [...(processes || [])].sort((a, b) => {
+            const rankDiff = statusRank(a.status) - statusRank(b.status);
+            if (rankDiff !== 0) return rankDiff;
+            const nameDiff = String(a.name || "").localeCompare(String(b.name || ""), "tr");
+            if (nameDiff !== 0) return nameDiff;
+            return Number(a.id || 0) - Number(b.id || 0);
+          });
+        }
 
-      function renderFleet(processes) {
-        if (!processes.length) {
-          els.fleetGrid.innerHTML = `
-            <div class="empty-state">
-              <div>
-                <strong>No managed processes yet.</strong>
-                Start one from the terminal with <code>buncore start &lt;script&gt; --name api</code>.
-              </div>
-            </div>
+        function selectedProcess() {
+          return state.processes.find((item) => String(item.id) === String(state.selectedId)) || null;
+        }
+
+        function baseNameFor(processOrName) {
+          const name = typeof processOrName === "string" ? processOrName : processOrName?.name || "";
+          const match = name.match(/^(.*)-(\d+)$/);
+          if (!match) return name;
+          const candidate = match[1];
+          const hasSibling = state.processes.some((proc) => proc.name === candidate || proc.name.startsWith(`${candidate}-`));
+          return hasSibling ? candidate : name;
+        }
+
+        function groupCountFor(processOrName) {
+          const base = baseNameFor(processOrName);
+          return state.processes.filter((proc) => baseNameFor(proc) === base).length || 1;
+        }
+
+        function filteredProcesses() {
+          const query = normalizeText(state.search);
+          return state.processes.filter((process) => {
+            const statusMatch = state.status === "all" || process.status === state.status;
+            if (!statusMatch) return false;
+            if (!query) return true;
+            const haystack = [process.name, process.script, process.cwd, baseNameFor(process)]
+              .map(normalizeText)
+              .join(" ");
+            return haystack.includes(query);
+          });
+        }
+
+        function statusText(status) {
+          return statusLabels[status] || status || "unknown";
+        }
+
+        function renderStatusBadge(status) {
+          const cls = `status-${escapeHtml(status || "stopped")}`;
+          return `<span class="status-badge ${cls}">${escapeHtml(statusText(status))}</span>`;
+        }
+
+        function setConnectionState(healthy) {
+          state.apiHealthy = healthy;
+          els.connectionPill.classList.toggle("offline", !healthy);
+          els.connectionText.textContent = healthy ? "Live API" : "Bağlantı yok";
+          els.heroMode.textContent = healthy ? "Live API" : "Offline / beklemede";
+          if (healthy) state.offlineNotified = false;
+        }
+
+        function pushActivity(kind, title, detail = "") {
+          state.activity.unshift({
+            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            kind,
+            title,
+            detail,
+            ts: Date.now(),
+          });
+          state.activity = state.activity.slice(0, 14);
+          renderActivity();
+        }
+
+        function toast(kind, title, detail = "") {
+          const toastEl = document.createElement("div");
+          toastEl.className = `toast ${kind}`;
+          toastEl.innerHTML = `
+            <strong>${escapeHtml(title)}</strong>
+            <p>${escapeHtml(detail || "İşlem tamamlandı.")}</p>
           `;
-          return;
+          els.toastStack.appendChild(toastEl);
+          window.setTimeout(() => toastEl.remove(), 3400);
         }
 
-        const maxRss = Math.max(...processes.map((item) => Number(item.summary?.rss || 0)), 1);
+        async function fetchJson(url, options) {
+          const response = await fetch(url, options);
+          let payload = {};
+          try {
+            payload = await response.json();
+          } catch {
+            payload = {};
+          }
+          if (!response.ok) {
+            throw new Error(payload.error || `HTTP ${response.status}`);
+          }
+          return payload;
+        }
 
-        els.fleetGrid.innerHTML = processes
-          .map((process) => {
-            const cpu = Number(process.summary?.cpuPercent || 0);
-            const rss = Number(process.summary?.rss || 0);
-            const heapUsed = Number(process.summary?.heapUsed || 0);
-            const heapTotal = Number(process.summary?.heapTotal || 0);
-            const cpuRatio = Math.max(0, Math.min(cpu / 100, 1));
-            const rssRatio = Math.max(0, Math.min(rss / maxRss, 1));
-            const heapRatio = heapTotal > 0 ? Math.max(0, Math.min(heapUsed / heapTotal, 1)) : 0;
-            const selected = String(process.id) === String(state.selectedId);
-            const watchLabel = process.watchEnabled ? `watch ${process.watchStrategy || "enabled"}` : "watch off";
+        async function requestAction(body) {
+          const response = await fetch("/api/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          let payload = {};
+          try {
+            payload = await response.json();
+          } catch {
+            payload = {};
+          }
+          if (!response.ok || !payload.success) {
+            throw new Error(payload.error || `HTTP ${response.status}`);
+          }
+          return payload;
+        }
 
-            return `
-              <article class="fleet-card ${selected ? "selected" : ""}" data-id="${escapeHtml(process.id)}" tabindex="0">
-                <div class="fleet-card-top">
-                  <span class="status-badge status-${escapeHtml(process.status)}">${escapeHtml(process.status)}</span>
-                  <span class="fleet-id">#${escapeHtml(process.id)}</span>
-                </div>
-                <h3>${escapeHtml(process.name)}</h3>
-                <p class="fleet-script">${escapeHtml(process.script || "No script path provided")}</p>
-                <div class="meta-row">
-                  <span class="meta-pill">pid ${escapeHtml(process.pid ?? "-")}</span>
-                  <span class="meta-pill">${escapeHtml(process.runtime || "runtime n/a")}</span>
-                  <span class="meta-pill">${escapeHtml(watchLabel)}</span>
-                </div>
-                <div class="meters">
-                  <div class="meter-row">
-                    <div class="meter-head"><span>CPU</span><strong>${escapeHtml(fmtPercent(cpu))}</strong></div>
-                    <div class="meter-track"><div class="meter-fill ${meterTone(cpuRatio)}" style="width:${(cpuRatio * 100).toFixed(1)}%"></div></div>
-                  </div>
-                  <div class="meter-row">
-                    <div class="meter-head"><span>RSS</span><strong>${escapeHtml(fmtBytes(rss))}</strong></div>
-                    <div class="meter-track"><div class="meter-fill ${meterTone(rssRatio)}" style="width:${(rssRatio * 100).toFixed(1)}%"></div></div>
-                  </div>
-                  <div class="meter-row">
-                    <div class="meter-head"><span>Heap</span><strong>${escapeHtml(fmtBytes(heapUsed))}</strong></div>
-                    <div class="meter-track"><div class="meter-fill ${meterTone(heapRatio)}" style="width:${(heapRatio * 100).toFixed(1)}%"></div></div>
-                  </div>
-                </div>
-                <div class="meta-row" style="margin-top:16px;">
-                  <span class="meta-pill">restarts ${escapeHtml(process.restarts ?? 0)}</span>
-                  <span class="meta-pill">uptime ${escapeHtml(runtimeWindow(process))}</span>
-                  <span class="meta-pill">lag ${escapeHtml(fmtLag(process.summary?.runtimeLagMs))}</span>
-                </div>
-              </article>
+        async function loadProcesses() {
+          const payload = await fetchJson("/api/processes", { cache: "no-store" });
+          return sortProcesses(payload.processes || []);
+        }
+
+        async function loadMetrics(id) {
+          const payload = await fetchJson(`/api/metrics?id=${encodeURIComponent(id)}`, { cache: "no-store" });
+          return payload.metrics || [];
+        }
+
+        async function loadLogs(id) {
+          return fetchJson(`/api/logs?id=${encodeURIComponent(id)}&lines=${state.logLines}`, { cache: "no-store" });
+        }
+
+        function updateSummary() {
+          const total = state.processes.length;
+          const online = state.processes.filter((process) => process.status === "online").length;
+          const watchEnabled = state.processes.filter((process) => process.watchEnabled).length;
+          const alerts = state.processes.filter(
+            (process) => process.status === "errored" || process.status === "stopping" || Number(process.restarts || 0) >= 5,
+          ).length;
+          const groups = new Set(state.processes.map((process) => baseNameFor(process))).size;
+          const totalCpu = state.processes.reduce((sum, process) => sum + Number(process.summary?.cpuPercent || 0), 0);
+          const totalRss = state.processes.reduce((sum, process) => sum + Number(process.summary?.rss || 0), 0);
+          const visible = filteredProcesses().length;
+
+          els.sumTotal.textContent = String(total);
+          els.sumOnline.textContent = String(online);
+          els.sumAlerts.textContent = String(alerts);
+          els.sumGroups.textContent = String(groups);
+          els.sumCpu.textContent = fmtPercent(totalCpu);
+          els.sumRss.textContent = fmtBytes(totalRss);
+          els.sumWatch.textContent = String(watchEnabled);
+          els.fleetMeta.textContent = `${visible}/${total} process`;
+          els.lastUpdatedText.textContent = state.lastUpdated ? `Son yenileme: ${fmtDateTime(state.lastUpdated)}` : "Henüz veri yok";
+          els.heroHost.textContent = window.location.origin;
+        }
+
+        function renderFleet() {
+          const visible = filteredProcesses();
+          if (!visible.length) {
+            els.fleetList.innerHTML = `
+              <div class="empty-state">
+                <strong>Gösterilecek process bulunamadı.</strong>
+                Filtreleri sıfırlamayı deneyebilir veya sağdaki formdan yeni bir process başlatabilirsin.
+              </div>
             `;
-          })
-          .join("");
-      }
+            return;
+          }
 
-      function buildPath(points, key, width, height, padding) {
-        const series = points.map((point) => Number(point[key])).filter((value) => Number.isFinite(value));
-        if (series.length < 2) return "";
-        const min = Math.min(...series);
-        const max = Math.max(...series);
-        const range = Math.max(max - min, 1);
-        return points
-          .map((point, index) => {
-            const x = padding + (index / (points.length - 1 || 1)) * (width - padding * 2);
-            const raw = Number(point[key] ?? min);
-            const y = height - padding - ((raw - min) / range) * (height - padding * 2);
-            return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
-          })
-          .join(" ");
-      }
+          const maxCpu = visible.reduce((max, process) => Math.max(max, Number(process.summary?.cpuPercent || 0)), 1);
+          const maxRss = visible.reduce((max, process) => Math.max(max, Number(process.summary?.rss || 0)), 1);
 
-      function buildArea(points, key, width, height, padding) {
-        const line = buildPath(points, key, width, height, padding);
-        if (!line) return "";
-        const baseY = height - padding;
-        const firstX = padding;
-        const lastX = width - padding;
-        return `${line} L ${lastX.toFixed(2)} ${baseY.toFixed(2)} L ${firstX.toFixed(2)} ${baseY.toFixed(2)} Z`;
-      }
+          els.fleetList.innerHTML = visible
+            .map((process) => {
+              const isSelected = String(process.id) === String(state.selectedId);
+              const cpu = Number(process.summary?.cpuPercent || 0);
+              const rss = Number(process.summary?.rss || 0);
+              const heapUsed = Number(process.summary?.heapUsed || 0);
+              const heapTotal = Number(process.summary?.heapTotal || 0);
+              const heapRatio = heapTotal > 0 ? `${Math.round((heapUsed / heapTotal) * 100)}% heap` : "heap yok";
+              const primaryLabel = process.status === "online" ? "Restart" : "Start";
+              const base = baseNameFor(process);
+              const canReload = process.status === "online";
+              const canStop = !["stopped", "stopping"].includes(process.status);
+              const cpuWidth = clamp((cpu / maxCpu) * 100, 2, 100);
+              const rssWidth = clamp((rss / maxRss) * 100, 2, 100);
 
-      function renderDetail(process) {
-        if (!process) {
-          els.selectedHero.textContent = "none";
-          els.detailPanel.innerHTML = `
-            <div class="empty-state">
-              <div>
-                <strong>Select a process card.</strong>
-                Metrics history, lifecycle data, and watcher configuration will appear here.
-              </div>
-            </div>
-          `;
-          return;
+              return `
+                <article class="fleet-row ${isSelected ? "selected" : ""}" data-id="${escapeHtml(process.id)}" tabindex="0">
+                  <div class="row-app" data-select-id="${escapeHtml(process.id)}">
+                    <button class="row-app-button" type="button" data-select-id="${escapeHtml(process.id)}">
+                      <div class="app-title">
+                        <span class="status-dot ${escapeHtml(process.status)}"></span>
+                        <div>
+                          <strong>${escapeHtml(process.name || `#${process.id}`)}</strong>
+                          <small>ID ${escapeHtml(process.id)} • PID ${escapeHtml(process.pid ?? "—")}</small>
+                        </div>
+                      </div>
+                      <div class="script-line">${escapeHtml(process.script || "Script bilgisi yok")}</div>
+                    </button>
+                    <div class="tag-row">
+                      <span class="mini-chip">Base: ${escapeHtml(base || "—")}</span>
+                      <span class="mini-chip">CWD: ${escapeHtml(process.cwd || ".")}</span>
+                      <span class="mini-chip">Watch: ${escapeHtml(process.watchEnabled ? "on" : "off")}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span class="segment-label">Durum</span>
+                    ${renderStatusBadge(process.status)}
+                    <div class="metric-sub" style="margin-top: 8px">${escapeHtml(runtimeWindow(process))}</div>
+                  </div>
+
+                  <div>
+                    <span class="segment-label">CPU</span>
+                    <div class="metric-value">${escapeHtml(fmtPercent(cpu))}</div>
+                    <div class="metric-sub">lag ${escapeHtml(String(process.summary?.runtimeLagMs ?? 0))} ms</div>
+                    <div class="meter"><span style="width:${cpuWidth}%"></span></div>
+                  </div>
+
+                  <div>
+                    <span class="segment-label">Memory</span>
+                    <div class="metric-value">${escapeHtml(fmtBytes(rss))}</div>
+                    <div class="metric-sub">${escapeHtml(heapRatio)}</div>
+                    <div class="meter"><span style="width:${rssWidth}%"></span></div>
+                  </div>
+
+                  <div>
+                    <span class="segment-label">Uptime</span>
+                    <div class="metric-value">${escapeHtml(runtimeWindow(process))}</div>
+                    <div class="metric-sub">${escapeHtml(String(process.restarts || 0))} restart</div>
+                  </div>
+
+                  <div>
+                    <span class="segment-label">Runtime</span>
+                    <div class="metric-value">${escapeHtml(process.runtime || "generic")}</div>
+                    <div class="metric-sub">${escapeHtml(process.platform || "unknown")}</div>
+                  </div>
+
+                  <div class="row-actions">
+                    <button class="btn tiny primary" type="button" data-inline-action="restart" data-target="${escapeHtml(process.name)}">${primaryLabel}</button>
+                    <button class="btn tiny" type="button" data-inline-action="reload" data-target="${escapeHtml(process.name)}" ${canReload ? "" : "disabled"}>Reload</button>
+                    <button class="btn tiny warn" type="button" data-inline-action="stop" data-target="${escapeHtml(process.name)}" ${canStop ? "" : "disabled"}>Stop</button>
+                    <button class="btn tiny danger" type="button" data-inline-action="delete" data-target="${escapeHtml(process.name)}">Delete</button>
+                  </div>
+                </article>
+              `;
+            })
+            .join("");
         }
 
-        const metrics = state.metrics.get(String(process.id))?.points ?? [];
-        const width = 640;
-        const height = 220;
-        const padding = 18;
-        const rssPath = buildPath(metrics, "rss", width, height, padding);
-        const rssArea = buildArea(metrics, "rss", width, height, padding);
-        const heapPath = buildPath(metrics, "heapUsed", width, height, padding);
+        function buildPath(points, key, width, height, padding) {
+          const series = points.map((point) => Number(point?.[key])).filter((value) => Number.isFinite(value));
+          if (series.length < 2) return "";
+          const min = Math.min(...series);
+          const max = Math.max(...series);
+          const range = Math.max(max - min, 1);
+          return points
+            .map((point, index) => {
+              const x = padding + (index / Math.max(points.length - 1, 1)) * (width - padding * 2);
+              const raw = Number(point?.[key] ?? min);
+              const y = height - padding - ((raw - min) / range) * (height - padding * 2);
+              return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+            })
+            .join(" ");
+        }
 
-        const cpu = Number(process.summary?.cpuPercent || 0);
-        const rss = Number(process.summary?.rss || 0);
-        const heapUsed = Number(process.summary?.heapUsed || 0);
-        const heapTotal = Number(process.summary?.heapTotal || 0);
-        const heapRatio = heapTotal ? `${Math.round((heapUsed / heapTotal) * 100)}% of heap budget` : "heap budget unavailable";
-        const metricsNote = metrics.length ? `${metrics.length} datapoints loaded` : "No metrics history yet";
+        function buildArea(points, key, width, height, padding) {
+          const line = buildPath(points, key, width, height, padding);
+          if (!line) return "";
+          const baseY = height - padding;
+          const firstX = padding;
+          const lastX = width - padding;
+          return `${line} L ${lastX.toFixed(2)} ${baseY.toFixed(2)} L ${firstX.toFixed(2)} ${baseY.toFixed(2)} Z`;
+        }
 
-        els.selectedHero.textContent = process.name;
+        function chartSvg(points) {
+          const width = 640;
+          const height = 220;
+          const padding = 18;
+          const rssPath = buildPath(points, "rss", width, height, padding);
+          const rssArea = buildArea(points, "rss", width, height, padding);
+          const heapPath = buildPath(points, "heapUsed", width, height, padding);
+          return `
+            <div class="chart-wrap">
+              <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Resource history chart">
+                <defs>
+                  <linearGradient id="chartRssFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(99, 215, 255, 0.28)"></stop>
+                    <stop offset="100%" stop-color="rgba(99, 215, 255, 0.02)"></stop>
+                  </linearGradient>
+                </defs>
+                <g opacity="0.22" stroke="rgba(255,255,255,0.12)">
+                  <line x1="0" y1="40" x2="${width}" y2="40"></line>
+                  <line x1="0" y1="110" x2="${width}" y2="110"></line>
+                  <line x1="0" y1="180" x2="${width}" y2="180"></line>
+                </g>
+                ${rssArea ? `<path d="${rssArea}" fill="url(#chartRssFill)"></path>` : ""}
+                ${rssPath ? `<path d="${rssPath}" fill="none" stroke="#63d7ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>` : ""}
+                ${heapPath ? `<path d="${heapPath}" fill="none" stroke="#78f3c5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 6"></path>` : ""}
+                ${!rssPath && !heapPath ? `<text x="50%" y="50%" fill="rgba(237,247,251,0.56)" dominant-baseline="middle" text-anchor="middle" font-size="16">Henüz metric history yok</text>` : ""}
+              </svg>
+            </div>
+          `;
+        }
 
-        els.detailPanel.innerHTML = `
-          <div class="detail-shell">
-            <div class="detail-top">
-              <div>
-                <p class="eyebrow" style="margin-bottom:10px;">selected process</p>
-                <h2>${escapeHtml(process.name)}</h2>
-                <p>${escapeHtml(process.script || "No script path provided")}</p>
+        function configRow(label, value, options = {}) {
+          const wide = options.wide ? " wide" : "";
+          const isCode = options.code ? true : false;
+          const safeValue = value === undefined || value === null || value === "" ? "—" : String(value);
+          const renderedValue = isCode
+            ? `<code>${escapeHtml(safeValue).replace(/\n/g, "<br>")}</code>`
+            : escapeHtml(safeValue).replace(/\n/g, "<br>");
+          return `
+            <div class="kv-row${wide}">
+              <span class="label">${escapeHtml(label)}</span>
+              <div class="value">${renderedValue}</div>
+            </div>
+          `;
+        }
+
+        function renderInspector() {
+          const process = selectedProcess();
+          if (!process) {
+            els.heroSelected.textContent = "—";
+            els.selectedBaseText.textContent = "Seçim yok";
+            els.inspectorContent.innerHTML = `
+              <div class="empty-state">
+                <strong>Bir process seç.</strong>
+                Sağ panelde; detaylı metric geçmişi, log tail, config ve yönetim komutları görüntülenir.
               </div>
+            `;
+            return;
+          }
+
+          const metrics = state.metrics.get(String(process.id))?.points || [];
+          const logState = state.logs.get(String(process.id)) || {};
+          const config = process.config || {};
+          const logPaths = process.logPaths || {};
+          const base = baseNameFor(process);
+          const groupCount = groupCountFor(process);
+          const cpu = Number(process.summary?.cpuPercent || 0);
+          const rss = Number(process.summary?.rss || 0);
+          const heapUsed = Number(process.summary?.heapUsed || 0);
+          const heapTotal = Number(process.summary?.heapTotal || 0);
+          const heapRatio = heapTotal > 0 ? `${Math.round((heapUsed / heapTotal) * 100)}% heap kullanımı` : "heap bütçesi yok";
+          const canReload = process.status === "online";
+          const canStop = !["stopped", "stopping"].includes(process.status);
+          const logText = logState.text || "Henüz log alınamadı.";
+
+          els.heroSelected.textContent = process.name || `#${process.id}`;
+          els.selectedBaseText.textContent = `${base || process.name} • ${groupCount} instance`;
+
+          els.inspectorContent.innerHTML = `
+            <div class="detail-hero">
+              <div class="detail-top">
+                <div>
+                  <p class="eyebrow" style="margin-bottom: 10px">Selected Process</p>
+                  <h3>${escapeHtml(process.name || `#${process.id}`)}</h3>
+                  <div class="detail-meta">
+                    ${escapeHtml(process.script || "Script bilgisi yok")}<br />
+                    ${escapeHtml(process.cwd || ".")}
+                  </div>
+                </div>
+                <div style="display: grid; gap: 8px; justify-items: end;">
+                  ${renderStatusBadge(process.status)}
+                  <span class="mini-chip">PID ${escapeHtml(process.pid ?? "—")}</span>
+                </div>
+              </div>
+
               <div class="detail-actions">
-                <span class="detail-badge detail-${escapeHtml(process.status)}">${escapeHtml(process.status)}</span>
-                <span class="ghost-badge">PID ${escapeHtml(process.pid ?? "-")}</span>
+                <button type="button" class="btn primary" data-detail-action="restart" data-target="${escapeHtml(process.name)}">${process.status === "online" ? "Restart" : "Start"}</button>
+                <button type="button" class="btn" data-detail-action="reload" data-target="${escapeHtml(process.name)}" ${canReload ? "" : "disabled"}>Reload</button>
+                <button type="button" class="btn warn" data-detail-action="stop" data-target="${escapeHtml(process.name)}" ${canStop ? "" : "disabled"}>Stop</button>
+                <button type="button" class="btn danger" data-detail-action="delete" data-target="${escapeHtml(process.name)}">Delete</button>
+                <button type="button" class="btn ghost" data-detail-action="flush" data-target="${escapeHtml(process.name)}">Flush Log</button>
+                <button type="button" class="btn ghost" data-detail-action="reset" data-target="${escapeHtml(process.name)}">Reset Sayaç</button>
+                <button type="button" class="btn ghost" data-clone-selected="true">Formu Doldur</button>
               </div>
             </div>
 
-            <div class="detail-stats">
-              <article class="detail-stat">
-                <span class="label">CPU load</span>
+            <div class="stat-strip">
+              <article class="stat-card">
+                <span class="label">CPU</span>
                 <strong>${escapeHtml(fmtPercent(cpu))}</strong>
-                <small>${escapeHtml(fmtLag(process.summary?.runtimeLagMs))} runtime lag</small>
+                <small>runtime lag ${escapeHtml(String(process.summary?.runtimeLagMs ?? 0))} ms</small>
               </article>
-              <article class="detail-stat">
-                <span class="label">Resident memory</span>
+              <article class="stat-card">
+                <span class="label">RSS</span>
                 <strong>${escapeHtml(fmtBytes(rss))}</strong>
-                <small>active RSS footprint</small>
+                <small>resident memory footprint</small>
               </article>
-              <article class="detail-stat">
-                <span class="label">Heap usage</span>
+              <article class="stat-card">
+                <span class="label">Heap</span>
                 <strong>${escapeHtml(fmtBytes(heapUsed))}</strong>
                 <small>${escapeHtml(heapRatio)}</small>
               </article>
-              <article class="detail-stat">
+              <article class="stat-card">
                 <span class="label">Lifecycle</span>
                 <strong>${escapeHtml(runtimeWindow(process))}</strong>
-                <small>${escapeHtml(process.restarts ?? 0)} restarts recorded</small>
+                <small>${escapeHtml(String(process.restarts || 0))} restart • ${escapeHtml(String(process.unstableRestarts || 0))} unstable</small>
               </article>
             </div>
 
-            <section class="chart-panel">
-              <div class="chart-head">
+            <section class="subpanel">
+              <div class="subpanel-head">
                 <div>
-                  <h2>Resource history</h2>
-                  <p>${escapeHtml(metricsNote)}</p>
+                  <h3>Resource history</h3>
+                  <p>${escapeHtml(metrics.length ? `${metrics.length} veri noktası yüklendi` : "Henüz metric history yok")}</p>
                 </div>
-                <div class="legend">
-                  <span class="rss">RSS</span>
-                  <span class="heap">Heap used</span>
-                </div>
+                <div class="mini-chip">RSS / Heap Used</div>
               </div>
-              <div class="spark-wrap">
-                <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Resource history chart">
-                  <defs>
-                    <linearGradient id="rssFill" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stop-color="rgba(120, 215, 255, 0.28)"></stop>
-                      <stop offset="100%" stop-color="rgba(120, 215, 255, 0.02)"></stop>
-                    </linearGradient>
-                  </defs>
-                  <g opacity="0.22" stroke="rgba(255,255,255,0.12)">
-                    <line x1="0" y1="40" x2="${width}" y2="40"></line>
-                    <line x1="0" y1="110" x2="${width}" y2="110"></line>
-                    <line x1="0" y1="180" x2="${width}" y2="180"></line>
-                  </g>
-                  ${rssArea ? `<path d="${rssArea}" fill="url(#rssFill)"></path>` : ""}
-                  ${rssPath ? `<path d="${rssPath}" fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue("--accent").trim()}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>` : ""}
-                  ${heapPath ? `<path d="${heapPath}" fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim()}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 6"></path>` : ""}
-                  ${
-                    !rssPath && !heapPath
-                      ? `<text x="50%" y="50%" fill="rgba(237,247,247,0.55)" dominant-baseline="middle" text-anchor="middle" font-size="16">No history points yet</text>`
-                      : ""
-                  }
-                </svg>
+              ${chartSvg(metrics)}
+            </section>
+
+            <section class="subpanel">
+              <div class="subpanel-head">
+                <div>
+                  <h3>Management</h3>
+                  <p>Scale ve signal komutlarını doğrudan seçili service üzerinde çalıştır.</p>
+                </div>
+                <div class="mini-chip">Base: ${escapeHtml(base || process.name)}</div>
+              </div>
+              <div class="manage-grid">
+                <form class="mini-form" data-scale-form>
+                  <label>
+                    <span>Scale target</span>
+                    <input type="text" name="target" value="${escapeHtml(base || process.name)}" readonly />
+                  </label>
+                  <label>
+                    <span>İstenen instance</span>
+                    <input type="number" name="count" min="0" value="${groupCount}" />
+                  </label>
+                  <button type="submit" class="btn primary">Scale Uygula</button>
+                </form>
+
+                <form class="mini-form" data-signal-form>
+                  <label>
+                    <span>Signal target</span>
+                    <input type="text" name="target" value="${escapeHtml(process.name)}" readonly />
+                  </label>
+                  <label>
+                    <span>Signal</span>
+                    <select name="signal">
+                      <option value="SIGTERM">SIGTERM</option>
+                      <option value="SIGINT">SIGINT</option>
+                      <option value="SIGHUP">SIGHUP</option>
+                      <option value="SIGUSR1">SIGUSR1</option>
+                      <option value="SIGUSR2" selected>SIGUSR2</option>
+                    </select>
+                  </label>
+                  <button type="submit" class="btn">Signal Gönder</button>
+                </form>
               </div>
             </section>
 
-            <section class="detail-list">
-              <div class="detail-row"><span class="key">Runtime</span><span class="val">${escapeHtml(process.runtime || "n/a")}</span></div>
-              <div class="detail-row"><span class="key">Platform</span><span class="val">${escapeHtml(process.platform || "n/a")}</span></div>
-              <div class="detail-row"><span class="key">Working directory</span><span class="val">${escapeHtml(process.cwd || "n/a")}</span></div>
-              <div class="detail-row"><span class="key">Watch mode</span><span class="val">${escapeHtml(process.watchEnabled ? "enabled" : "disabled")}</span></div>
-              <div class="detail-row"><span class="key">Watch strategy</span><span class="val">${escapeHtml(process.watchStrategy || "n/a")}</span></div>
-              <div class="detail-row"><span class="key">Preferred watcher</span><span class="val">${escapeHtml(process.watchPreferredStrategy || "n/a")}</span></div>
-              <div class="detail-row"><span class="key">Created</span><span class="val">${escapeHtml(fmtDateTime(process.createdAt))}</span></div>
-              <div class="detail-row"><span class="key">Started</span><span class="val">${escapeHtml(fmtDateTime(process.startedAt))}</span></div>
-              <div class="detail-row"><span class="key">Stopped</span><span class="val">${escapeHtml(fmtDateTime(process.stoppedAt))}</span></div>
-              <div class="detail-row"><span class="key">Last exit code</span><span class="val">${escapeHtml(process.lastExitCode ?? "n/a")}</span></div>
-              <div class="detail-row"><span class="key">JSC heap stats</span><span class="val">${escapeHtml(fmtBytes(process.details?.jscHeapStats?.heapSize))} / ${escapeHtml(process.details?.jscHeapStats?.objectCount ?? "n/a")} objects</span></div>
-              <div class="detail-row"><span class="key">Seen</span><span class="val">${escapeHtml(ago(process.startedAt || process.createdAt))}</span></div>
+            <section class="subpanel">
+              <div class="subpanel-head">
+                <div>
+                  <h3>Configuration & paths</h3>
+                  <p>Çalışma ayarları, watch bilgisi, restart parametreleri ve log yolları.</p>
+                </div>
+                <div class="mini-chip">${escapeHtml(process.runtime || "generic")}</div>
+              </div>
+              <div class="kv-grid">
+                ${configRow("Base Group", base)}
+                ${configRow("Group Instances", groupCount)}
+                ${configRow("Runtime", process.runtime || "generic")}
+                ${configRow("Platform", process.platform || "unknown")}
+                ${configRow("Created", fmtDateTime(process.createdAt))}
+                ${configRow("Started", fmtDateTime(process.startedAt))}
+                ${configRow("Stopped", fmtDateTime(process.stoppedAt))}
+                ${configRow("Last Exit Code", process.lastExitCode ?? "—")}
+                ${configRow("Script", process.script || "—", { wide: true, code: true })}
+                ${configRow("Working Directory", process.cwd || ".", { wide: true, code: true })}
+                ${configRow("Args", Array.isArray(config.args) && config.args.length ? config.args.join("\n") : "—", { wide: true, code: true })}
+                ${configRow("Environment", Array.isArray(config.envPairs) && config.envPairs.length ? config.envPairs.join("\n") : "—", { wide: true, code: true })}
+                ${configRow("Watch", process.watchEnabled ? `enabled (${process.watchStrategy || "watch"})` : "disabled")}
+                ${configRow("Watch Path", config.watchPath || "—", { code: true })}
+                ${configRow("Ignore Watch", Array.isArray(config.ignoreWatch) && config.ignoreWatch.length ? config.ignoreWatch.join("\n") : "—", { wide: true, code: true })}
+                ${configRow("Exec Mode", config.execMode || "auto")}
+                ${configRow("Interpreter", config.interpreter || "auto")}
+                ${configRow("Max Memory Restart", config.maxMemoryRestart ? fmtBytes(config.maxMemoryRestart) : "unlimited")}
+                ${configRow("Restart Delay", `${config.restartDelay ?? 100} ms`)}
+                ${configRow("Exp Backoff", `${config.expBackoffRestartDelay ?? 0} ms`)}
+                ${configRow("Kill Timeout", `${config.killTimeout ?? 6000} ms`)}
+                ${configRow("Cron Restart", config.cronRestart || "—")}
+                ${configRow("Combined Log", logPaths.combined || "—", { wide: true, code: true })}
+                ${configRow("Stdout Log", logPaths.stdout || config.outFile || "—", { wide: true, code: true })}
+                ${configRow("Stderr Log", logPaths.stderr || config.errorFile || "—", { wide: true, code: true })}
+              </div>
             </section>
-          </div>
-        `;
-      }
 
-      async function loadProcesses() {
-        if (demoMode) {
-          return { source: "demo", processes: demoProcesses };
+            <section class="subpanel">
+              <div class="subpanel-head">
+                <div>
+                  <h3>Live logs</h3>
+                  <p>${escapeHtml(logPaths.combined || "combined log tail")}</p>
+                </div>
+                <div class="log-toolbar">
+                  <label class="inline-toggle">
+                    <input type="checkbox" data-toggle-logs ${state.autoLogs ? "checked" : ""} />
+                    Auto log
+                  </label>
+                  <select data-log-lines>
+                    <option value="80" ${state.logLines === 80 ? "selected" : ""}>80 satır</option>
+                    <option value="160" ${state.logLines === 160 ? "selected" : ""}>160 satır</option>
+                    <option value="320" ${state.logLines === 320 ? "selected" : ""}>320 satır</option>
+                  </select>
+                  <button type="button" class="btn tiny" data-refresh-logs>Yenile</button>
+                  <button type="button" class="btn tiny" data-copy-logs ${logText ? "" : "disabled"}>Kopyala</button>
+                </div>
+              </div>
+              <pre class="log-output">${escapeHtml(logText)}</pre>
+              <div class="log-meta">Son log yenilemesi: ${escapeHtml(logState.updatedAt ? fmtDateTime(logState.updatedAt) : "henüz yok")}</div>
+            </section>
+          `;
         }
 
-        try {
-          const response = await fetch("/api/processes", { cache: "no-store" });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const payload = await response.json();
-          return { source: "live", processes: payload.processes || [] };
-        } catch (error) {
-          if (state.processes.length) {
-            return { source: "offline", processes: state.processes };
+        function renderActivity() {
+          if (!state.activity.length) {
+            els.activityFeed.innerHTML = `
+              <div class="empty-state">
+                <strong>Henüz aktivite yok.</strong>
+                Dashboard üzerindeki ilk işlemin burada loglanacak.
+              </div>
+            `;
+            return;
           }
-          return { source: "demo", processes: demoProcesses };
+
+          els.activityFeed.innerHTML = state.activity
+            .map(
+              (item) => `
+                <article class="activity-item">
+                  <span class="activity-dot ${escapeHtml(item.kind)}"></span>
+                  <div class="activity-main">
+                    <strong>${escapeHtml(item.title)}</strong>
+                    <p>${escapeHtml(item.detail || "Detay bulunmuyor.")}</p>
+                  </div>
+                  <span class="activity-time">${escapeHtml(timeAgo(item.ts))}</span>
+                </article>
+              `,
+            )
+            .join("");
         }
-      }
 
-      async function loadMetrics(id) {
-        if (demoMode || state.source === "demo") {
-          return demoMetrics[id] || [];
+        function focusLauncher() {
+          els.launcherPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+          els.launchName.focus();
         }
 
-        try {
-          const response = await fetch(`/api/metrics?id=${encodeURIComponent(id)}`, { cache: "no-store" });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const payload = await response.json();
-          return payload.metrics || [];
-        } catch (error) {
-          return state.metrics.get(String(id))?.points || [];
+        function resetLauncherForm() {
+          els.launcherForm.reset();
+          els.launchCwd.value = ".";
+          els.launchInstances.value = "1";
+          els.launchMaxRestarts.value = "15";
+          els.launchMinUptime.value = "1000";
+          els.launchRestartDelay.value = "100";
+          els.launchExpBackoffRestartDelay.value = "0";
+          els.launchKillTimeout.value = "6000";
+          els.launchAutorestart.checked = true;
+          els.launchExecMode.value = "";
         }
-      }
 
-      async function refresh() {
-        const loaded = await loadProcesses();
-        state.source = loaded.source;
-        setSourceLabel(state.source);
-
-        state.processes = sortProcesses(loaded.processes || []);
-        if (state.processes.length && !state.processes.some((item) => String(item.id) === String(state.selectedId))) {
-          state.selectedId = state.processes[0].id;
+        function fillLauncherFromProcess(process) {
+          if (!process) return;
+          const config = process.config || {};
+          const groupCount = groupCountFor(process);
+          els.launchName.value = baseNameFor(process) || process.name || "";
+          els.launchScript.value = process.script || "";
+          els.launchCwd.value = process.cwd || ".";
+          els.launchInterpreter.value = config.interpreter || "";
+          els.launchInstances.value = String(groupCount || 1);
+          els.launchExecMode.value = config.execMode || (groupCount > 1 ? "cluster" : "");
+          els.launchWatch.checked = Boolean(process.watchEnabled || config.watch);
+          els.launchAutorestart.checked = config.autorestart !== false;
+          els.launchArgs.value = Array.isArray(config.args) ? config.args.join("\n") : "";
+          els.launchEnvPairs.value = Array.isArray(config.envPairs) ? config.envPairs.join("\n") : "";
+          els.launchWatchPath.value = config.watchPath || "";
+          els.launchIgnoreWatch.value = Array.isArray(config.ignoreWatch) ? config.ignoreWatch.join("\n") : "";
+          els.launchMaxMemoryMb.value = bytesToMbInput(config.maxMemoryRestart);
+          els.launchMaxRestarts.value = String(config.maxRestarts ?? 15);
+          els.launchMinUptime.value = String(config.minUptime ?? 1000);
+          els.launchRestartDelay.value = String(config.restartDelay ?? 100);
+          els.launchExpBackoffRestartDelay.value = String(config.expBackoffRestartDelay ?? 0);
+          els.launchCronRestart.value = config.cronRestart || "";
+          els.launchOutFile.value = config.outFile || "";
+          els.launchErrorFile.value = config.errorFile || "";
+          els.launchMaxLogSizeMb.value = bytesToMbInput(config.maxLogSize);
+          els.launchKillTimeout.value = String(config.killTimeout ?? 6000);
+          focusLauncher();
+          toast("info", "Launcher formu dolduruldu", `${process.name} konfigürasyonu kopyalandı.`);
         }
-        if (!state.processes.length) state.selectedId = null;
 
-        updateSummary(state.processes);
-        renderFleet(state.processes);
-
-        const active = selectedProcess();
-        if (active) {
-          const metrics = await loadMetrics(active.id);
-          state.metrics.set(String(active.id), { points: metrics, updatedAt: Date.now() });
+        function buildLaunchPayload() {
+          const instances = Math.max(1, parseIntOr(els.launchInstances.value, 1));
+          return pruneObject({
+            name: optionalString(els.launchName.value),
+            script: optionalString(els.launchScript.value),
+            cwd: optionalString(els.launchCwd.value) || ".",
+            interpreter: optionalString(els.launchInterpreter.value),
+            args: splitListInput(els.launchArgs.value),
+            envPairs: splitListInput(els.launchEnvPairs.value),
+            instances,
+            watch: els.launchWatch.checked,
+            watchPath: optionalString(els.launchWatchPath.value),
+            ignoreWatch: splitListInput(els.launchIgnoreWatch.value),
+            maxMemoryRestart: mbToBytes(els.launchMaxMemoryMb.value),
+            autorestart: els.launchAutorestart.checked,
+            maxRestarts: parseIntOr(els.launchMaxRestarts.value, 15),
+            minUptime: parseIntOr(els.launchMinUptime.value, 1000),
+            restartDelay: parseIntOr(els.launchRestartDelay.value, 100),
+            outFile: optionalString(els.launchOutFile.value),
+            errorFile: optionalString(els.launchErrorFile.value),
+            execMode: optionalString(els.launchExecMode.value) || (instances > 1 ? "cluster" : undefined),
+            expBackoffRestartDelay: parseIntOr(els.launchExpBackoffRestartDelay.value, 0),
+            cronRestart: optionalString(els.launchCronRestart.value),
+            maxLogSize: mbToBytes(els.launchMaxLogSizeMb.value),
+            killTimeout: parseIntOr(els.launchKillTimeout.value, 6000),
+          });
         }
-        renderDetail(active);
-      }
 
-      els.fleetGrid.addEventListener("click", async (event) => {
-        const card = event.target.closest("[data-id]");
-        if (!card) return;
-        state.selectedId = card.getAttribute("data-id");
-        renderFleet(state.processes);
-        renderDetail(selectedProcess());
-        const active = selectedProcess();
-        if (!active) return;
-        const metrics = await loadMetrics(active.id);
-        state.metrics.set(String(active.id), { points: metrics, updatedAt: Date.now() });
-        renderDetail(active);
-      });
+        function defaultConfirm(action, target) {
+          if (action === "delete") return `${target} process'i tamamen silmek istediğine emin misin?`;
+          if (action === "resurrect") return "Kaydedilmiş fleet state geri yüklensin mi?";
+          if (target === "all" && ["stop", "restart", "flush"].includes(action)) {
+            return `Bu işlem tüm process'ler üzerinde ${actionLabels[action] || action} komutunu çalıştıracak. Devam edilsin mi?`;
+          }
+          return "";
+        }
 
-      els.fleetGrid.addEventListener("keydown", async (event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        const card = event.target.closest("[data-id]");
-        if (!card) return;
-        event.preventDefault();
-        card.click();
-      });
+        async function postAction(action, payload = {}, options = {}) {
+          const confirmMessage = options.confirmMessage ?? defaultConfirm(action, payload.target || payload.name || "all");
+          if (confirmMessage && !window.confirm(confirmMessage)) return false;
 
-      renderPlaybook();
-      refresh();
-      setInterval(refresh, 1500);
+          try {
+            pushActivity("info", `${actionLabels[action] || action} gönderildi`, payload.target || payload.name || "global action");
+            const result = await requestAction(pruneObject({ action, ...payload }));
+            const countText = Number.isFinite(Number(result?.data?.count)) ? ` (${result.data.count})` : "";
+            pushActivity("success", `${actionLabels[action] || action} başarılı`, payload.target || payload.name || "İşlem tamamlandı");
+            toast("success", `${actionLabels[action] || action} tamamlandı${countText}`, payload.target || payload.name || "Dashboard action API");
+            if (options.selectByName) {
+              state.pendingSelect = options.selectByName;
+            }
+            await refreshNow(true);
+            return true;
+          } catch (error) {
+            pushActivity("error", `${actionLabels[action] || action} başarısız`, error.message || "Bilinmeyen hata");
+            toast("error", `${actionLabels[action] || action} başarısız`, error.message || "Bilinmeyen hata");
+            return false;
+          }
+        }
+
+        async function refreshSelectedMetrics() {
+          const process = selectedProcess();
+          if (!process) return;
+          try {
+            const metrics = await loadMetrics(process.id);
+            state.metrics.set(String(process.id), { points: metrics, updatedAt: Date.now() });
+          } catch {
+            // ignore transient metrics failures
+          }
+        }
+
+        async function refreshSelectedLogs(force = false) {
+          const process = selectedProcess();
+          if (!process || state.loadingLogs || (!force && !state.autoLogs)) return;
+          state.loadingLogs = true;
+          try {
+            const payload = await loadLogs(process.id);
+            state.logs.set(String(process.id), {
+              text: payload.log || "",
+              path: process.logPaths?.combined || "",
+              updatedAt: Date.now(),
+            });
+          } catch {
+            // ignore transient log failures
+          } finally {
+            state.loadingLogs = false;
+            renderInspector();
+          }
+        }
+
+        async function refreshNow(force = false) {
+          if (state.refreshing || (!force && !state.autoRefresh)) return;
+          state.refreshing = true;
+          els.refreshBtn.disabled = true;
+
+          try {
+            const processes = await loadProcesses();
+            state.processes = processes;
+
+            if (state.pendingSelect) {
+              const match = state.processes.find(
+                (process) => process.name === state.pendingSelect || process.name.startsWith(`${state.pendingSelect}-`),
+              );
+              if (match) state.selectedId = match.id;
+              state.pendingSelect = null;
+            }
+
+            if (state.selectedId == null && state.processes.length) {
+              state.selectedId = state.processes[0].id;
+            }
+
+            if (state.selectedId != null && !state.processes.some((process) => String(process.id) === String(state.selectedId))) {
+              state.selectedId = state.processes[0]?.id ?? null;
+            }
+
+            state.lastUpdated = Date.now();
+            setConnectionState(true);
+            updateSummary();
+            renderFleet();
+            await refreshSelectedMetrics();
+            await refreshSelectedLogs(force || state.autoLogs);
+            renderInspector();
+          } catch (error) {
+            setConnectionState(false);
+            updateSummary();
+            renderFleet();
+            renderInspector();
+            if (!state.offlineNotified) {
+              pushActivity("error", "Dashboard API erişilemedi", error.message || "İstek başarısız oldu");
+              toast("error", "Dashboard API erişilemedi", error.message || "Bağlantı kurulamadı");
+              state.offlineNotified = true;
+            }
+          } finally {
+            state.refreshing = false;
+            els.refreshBtn.disabled = false;
+          }
+        }
+
+        els.refreshBtn.addEventListener("click", () => refreshNow(true));
+        els.autoRefreshToggle.addEventListener("change", (event) => {
+          state.autoRefresh = event.target.checked;
+        });
+        els.saveBtn.addEventListener("click", () => postAction("save"));
+        els.resurrectBtn.addEventListener("click", () => postAction("resurrect"));
+        els.launcherToggleBtn.addEventListener("click", focusLauncher);
+        els.clearFiltersBtn.addEventListener("click", () => {
+          state.search = "";
+          state.status = "all";
+          els.searchInput.value = "";
+          els.statusFilter.value = "all";
+          updateSummary();
+          renderFleet();
+        });
+
+        els.searchInput.addEventListener("input", (event) => {
+          state.search = event.target.value || "";
+          updateSummary();
+          renderFleet();
+        });
+
+        els.statusFilter.addEventListener("change", (event) => {
+          state.status = event.target.value || "all";
+          updateSummary();
+          renderFleet();
+        });
+
+        document.querySelectorAll("[data-global-action]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const action = button.getAttribute("data-global-action");
+            const target = button.getAttribute("data-target") || "all";
+            postAction(action, { target });
+          });
+        });
+
+        els.fleetList.addEventListener("click", async (event) => {
+          const actionButton = event.target.closest("[data-inline-action]");
+          if (actionButton) {
+            event.stopPropagation();
+            await postAction(actionButton.getAttribute("data-inline-action"), {
+              target: actionButton.getAttribute("data-target"),
+            });
+            return;
+          }
+
+          const selectable = event.target.closest("[data-select-id]") || event.target.closest(".fleet-row");
+          if (!selectable) return;
+          const id = selectable.getAttribute("data-select-id") || selectable.getAttribute("data-id");
+          if (!id) return;
+          state.selectedId = id;
+          renderFleet();
+          await refreshSelectedMetrics();
+          await refreshSelectedLogs(true);
+          renderInspector();
+        });
+
+        els.fleetList.addEventListener("keydown", async (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          const row = event.target.closest(".fleet-row");
+          if (!row) return;
+          event.preventDefault();
+          row.click();
+        });
+
+        els.inspectorContent.addEventListener("click", async (event) => {
+          const actionButton = event.target.closest("[data-detail-action]");
+          if (actionButton) {
+            await postAction(actionButton.getAttribute("data-detail-action"), {
+              target: actionButton.getAttribute("data-target"),
+            });
+            return;
+          }
+
+          if (event.target.closest("[data-refresh-logs]")) {
+            await refreshSelectedLogs(true);
+            return;
+          }
+
+          if (event.target.closest("[data-copy-logs]")) {
+            const process = selectedProcess();
+            const logText = state.logs.get(String(process?.id || ""))?.text || "";
+            if (!logText) return;
+            try {
+              await navigator.clipboard.writeText(logText);
+              toast("success", "Log panoya kopyalandı", process?.name || "selected process");
+            } catch {
+              toast("error", "Panoya kopyalanamadı", "Tarayıcı erişimi engelledi.");
+            }
+            return;
+          }
+
+          if (event.target.closest("[data-clone-selected]")) {
+            fillLauncherFromProcess(selectedProcess());
+          }
+        });
+
+        els.inspectorContent.addEventListener("change", async (event) => {
+          if (event.target.matches("[data-log-lines]")) {
+            state.logLines = parseIntOr(event.target.value, 160);
+            await refreshSelectedLogs(true);
+            return;
+          }
+          if (event.target.matches("[data-toggle-logs]")) {
+            state.autoLogs = event.target.checked;
+          }
+        });
+
+        els.inspectorContent.addEventListener("submit", async (event) => {
+          if (event.target.matches("[data-scale-form]")) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const target = String(formData.get("target") || "");
+            const count = Math.max(0, parseIntOr(formData.get("count"), groupCountFor(target)));
+            await postAction("scale", { target, count });
+            return;
+          }
+
+          if (event.target.matches("[data-signal-form]")) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const target = String(formData.get("target") || "");
+            const signal = String(formData.get("signal") || "SIGUSR2");
+            await postAction("signal", { target, signal });
+          }
+        });
+
+        els.launcherForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const payload = buildLaunchPayload();
+          if (!payload.name || !payload.script) {
+            toast("error", "Eksik bilgi", "Process adı ve script alanları zorunludur.");
+            return;
+          }
+          const started = await postAction("start", payload, { selectByName: payload.name });
+          if (started) {
+            resetLauncherForm();
+          }
+        });
+
+        els.launcherResetBtn.addEventListener("click", resetLauncherForm);
+
+        resetLauncherForm();
+        renderActivity();
+        updateSummary();
+        renderFleet();
+        renderInspector();
+        pushActivity("info", "Dashboard hazır", "Canlı process listesini yüklemek için API bekleniyor.");
+        refreshNow(true);
+
+        window.setInterval(() => {
+          if (document.hidden) return;
+          if (state.autoRefresh) refreshNow(true);
+        }, 2500);
+
+        window.setInterval(() => {
+          if (document.hidden) return;
+          if (state.autoLogs) refreshSelectedLogs(true);
+        }, 3200);
+      })();
     </script>
   </body>
 </html>

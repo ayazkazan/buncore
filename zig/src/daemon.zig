@@ -779,7 +779,13 @@ fn launchManagedProcess(state: *DaemonState, process: *ManagedProcess) !void {
     child_ptr.stdin_behavior = .Ignore;
     child_ptr.stdout_behavior = .Pipe;
     child_ptr.stderr_behavior = .Pipe;
-    child_ptr.cwd = process.config.cwd;
+    child_ptr.cwd = if (std.fs.path.isAbsolute(process.config.cwd)) process.config.cwd else blk: {
+        // Resolve relative CWD
+        var buf: [std.fs.max_path_bytes]u8 = undefined;
+        const resolved = std.fs.cwd().realpath(process.config.cwd, &buf) catch process.config.cwd;
+        const duped = state.allocator.dupe(u8, resolved) catch process.config.cwd;
+        break :blk duped;
+    };
 
     var env_map = try std.process.getEnvMap(state.allocator);
     defer env_map.deinit();
@@ -1112,6 +1118,11 @@ fn watchThread(state: *DaemonState) void {
                 std.heap.page_allocator.free(owned_specs);
             }
 
+            if (owned_specs.len == 0) {
+                std.time.sleep(std.time.ns_per_s);
+                continue;
+            }
+
             const specs = std.heap.page_allocator.alloc(watch_mod.Spec, owned_specs.len) catch {
                 std.time.sleep(std.time.ns_per_s);
                 continue;
@@ -1167,6 +1178,7 @@ fn buildProcessJson(allocator: Allocator, process: *ManagedProcess) ![]u8 {
     var out = std.ArrayList(u8).init(allocator);
     errdefer out.deinit();
     const writer = out.writer();
+
     try writer.writeByte('{');
     try writer.print("\"id\":{d}", .{process.id});
     try writer.writeAll(",\"name\":");
@@ -1177,12 +1189,16 @@ fn buildProcessJson(allocator: Allocator, process: *ManagedProcess) ![]u8 {
     try std.json.stringify(process.config.cwd, .{}, writer);
     try writer.writeAll(",\"status\":");
     try std.json.stringify(process.status.label(), .{}, writer);
-    try writer.print(",\"pid\":{s}", .{if (process.pid == null) "null" else try std.fmt.allocPrint(allocator, "{d}", .{process.pid.?})});
+    try writer.writeAll(",\"pid\":");
+    if (process.pid) |pid| try writer.print("{d}", .{pid}) else try writer.writeAll("null");
     try writer.print(",\"createdAt\":{d}", .{process.created_at});
-    try writer.print(",\"startedAt\":{s}", .{if (process.started_at == null) "null" else try std.fmt.allocPrint(allocator, "{d}", .{process.started_at.?})});
-    try writer.print(",\"stoppedAt\":{s}", .{if (process.stopped_at == null) "null" else try std.fmt.allocPrint(allocator, "{d}", .{process.stopped_at.?})});
+    try writer.writeAll(",\"startedAt\":");
+    if (process.started_at) |started_at| try writer.print("{d}", .{started_at}) else try writer.writeAll("null");
+    try writer.writeAll(",\"stoppedAt\":");
+    if (process.stopped_at) |stopped_at| try writer.print("{d}", .{stopped_at}) else try writer.writeAll("null");
     try writer.print(",\"restarts\":{d},\"unstableRestarts\":{d}", .{ process.restarts, process.unstable_restarts });
-    try writer.print(",\"lastExitCode\":{s}", .{if (process.last_exit_code == null) "null" else try std.fmt.allocPrint(allocator, "{d}", .{process.last_exit_code.?})});
+    try writer.writeAll(",\"lastExitCode\":");
+    if (process.last_exit_code) |last_exit_code| try writer.print("{d}", .{last_exit_code}) else try writer.writeAll("null");
     try writer.writeAll(",\"runtime\":");
     try std.json.stringify(process.runtime_kind, .{}, writer);
     try writer.writeAll(",\"platform\":");
@@ -1199,7 +1215,49 @@ fn buildProcessJson(allocator: Allocator, process: *ManagedProcess) ![]u8 {
     try std.json.stringify(process.summary, .{}, writer);
     try writer.writeAll(",\"details\":");
     try std.json.stringify(process.details, .{}, writer);
+
+    try writer.writeAll(",\"config\":{");
+    try writer.writeAll("\"args\":");
+    try std.json.stringify(process.config.args, .{}, writer);
+    try writer.writeAll(",\"envPairs\":");
+    try std.json.stringify(process.config.env_pairs, .{}, writer);
+    try writer.print(",\"instances\":{d},\"watch\":{s},\"maxMemoryRestart\":{d},\"autorestart\":{s},\"maxRestarts\":{d},\"minUptime\":{d},\"restartDelay\":{d},\"expBackoffRestartDelay\":{d},\"maxLogSize\":{d},\"killTimeout\":{d}", .{
+        process.config.instances,
+        if (process.config.watch) "true" else "false",
+        process.config.max_memory_restart,
+        if (process.config.autorestart) "true" else "false",
+        process.config.max_restarts,
+        process.config.min_uptime,
+        process.config.restart_delay,
+        process.config.exp_backoff_restart_delay,
+        process.config.max_log_size,
+        process.config.kill_timeout,
+    });
+    try writer.writeAll(",\"interpreter\":");
+    if (process.config.interpreter) |interpreter| try std.json.stringify(interpreter, .{}, writer) else try writer.writeAll("null");
+    try writer.writeAll(",\"watchPath\":");
+    if (process.config.watch_path) |watch_path| try std.json.stringify(watch_path, .{}, writer) else try writer.writeAll("null");
+    try writer.writeAll(",\"ignoreWatch\":");
+    try std.json.stringify(process.config.ignore_watch, .{}, writer);
+    try writer.writeAll(",\"outFile\":");
+    if (process.config.out_file) |out_file| try std.json.stringify(out_file, .{}, writer) else try writer.writeAll("null");
+    try writer.writeAll(",\"errorFile\":");
+    if (process.config.error_file) |error_file| try std.json.stringify(error_file, .{}, writer) else try writer.writeAll("null");
+    try writer.writeAll(",\"execMode\":");
+    if (process.config.exec_mode) |exec_mode| try std.json.stringify(exec_mode, .{}, writer) else try writer.writeAll("null");
+    try writer.writeAll(",\"stopExitCodes\":");
+    try std.json.stringify(process.config.stop_exit_codes, .{}, writer);
+    try writer.writeAll(",\"cronRestart\":");
+    if (process.config.cron_restart) |cron_restart| try std.json.stringify(cron_restart, .{}, writer) else try writer.writeAll("null");
     try writer.writeByte('}');
+
+    try writer.writeAll(",\"logPaths\":{\"combined\":");
+    try std.json.stringify(process.log_path, .{}, writer);
+    try writer.writeAll(",\"stdout\":");
+    if (process.out_log_path) |stdout_path| try std.json.stringify(stdout_path, .{}, writer) else try writer.writeAll("null");
+    try writer.writeAll(",\"stderr\":");
+    if (process.err_log_path) |stderr_path| try std.json.stringify(stderr_path, .{}, writer) else try writer.writeAll("null");
+    try writer.writeAll("}}");
     return out.toOwnedSlice();
 }
 
@@ -1973,27 +2031,49 @@ fn routeClientThread(state: *DaemonState, stream: std.net.Stream) void {
     connection.wait_mutex.unlock();
 }
 
+fn httpJsonResponse(stream: anytype, status: []const u8, data: []const u8) void {
+    stream.writer().print("HTTP/1.1 {s}\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{ status, data.len, data }) catch {};
+}
+
+fn httpHtmlResponse(stream: anytype, data: []const u8) void {
+    stream.writer().print("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{ data.len, data }) catch {};
+}
+
+fn extractHttpBody(buf: []const u8) []const u8 {
+    if (std.mem.indexOf(u8, buf, "\r\n\r\n")) |idx| return buf[idx + 4 ..];
+    if (std.mem.indexOf(u8, buf, "\n\n")) |idx| return buf[idx + 2 ..];
+    return "";
+}
+
 fn dashboardThread(state: *DaemonState) void {
     var server = openListen(state.dashboard_port) catch return;
     defer server.deinit();
     const index_path = storage_mod.dashboardIndexPath(std.heap.page_allocator) catch return;
     defer std.heap.page_allocator.free(index_path);
+    const allocator = std.heap.page_allocator;
 
     while (state.running) {
         const conn = server.accept() catch continue;
         var stream = conn.stream;
         defer stream.close();
-        var request_storage: [8192]u8 = undefined;
+        var request_storage: [16384]u8 = undefined;
         const read_len = stream.read(&request_storage) catch continue;
         if (read_len == 0) continue;
         const request_buf = request_storage[0..read_len];
         const first_line = std.mem.sliceTo(request_buf, '\n');
+
+        // CORS preflight
+        if (std.mem.startsWith(u8, first_line, "OPTIONS ")) {
+            stream.writer().writeAll("HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nContent-Length: 0\r\nConnection: close\r\n\r\n") catch {};
+            continue;
+        }
+
         if (std.mem.startsWith(u8, first_line, "GET /api/processes")) {
             state.mutex.lock();
-            const data = buildProcessesListJson(std.heap.page_allocator, state) catch "{\"processes\":[]}";
+            const data = buildProcessesListJson(allocator, state) catch "{\"processes\":[]}";
             state.mutex.unlock();
-            defer if (@TypeOf(data) == []u8) std.heap.page_allocator.free(data);
-            stream.writer().print("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{ data.len, data }) catch {};
+            defer if (@TypeOf(data) == []u8) allocator.free(data);
+            httpJsonResponse(&stream, "200 OK", data);
             continue;
         }
         if (std.mem.startsWith(u8, first_line, "GET /api/metrics?id=")) {
@@ -2001,15 +2081,89 @@ fn dashboardThread(state: *DaemonState) void {
             const end = std.mem.indexOfScalar(u8, query, ' ') orelse query.len;
             state.mutex.lock();
             const process = state.findProcess(query[0..end]);
-            const data = if (process) |p| buildHistoryJson(std.heap.page_allocator, p) catch "{\"metrics\":[]}" else "{\"metrics\":[]}";
+            const data = if (process) |p| buildHistoryJson(allocator, p) catch "{\"metrics\":[]}" else "{\"metrics\":[]}";
             state.mutex.unlock();
-            defer if (@TypeOf(data) == []u8) std.heap.page_allocator.free(data);
-            stream.writer().print("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{ data.len, data }) catch {};
+            defer if (@TypeOf(data) == []u8) allocator.free(data);
+            httpJsonResponse(&stream, "200 OK", data);
             continue;
         }
-        const html = std.fs.cwd().readFileAlloc(std.heap.page_allocator, index_path, 512 * 1024) catch "<h1>buncore dashboard unavailable</h1>";
-        defer if (@TypeOf(html) == []u8) std.heap.page_allocator.free(html);
-        stream.writer().print("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {d}\r\nConnection: close\r\n\r\n{s}", .{ html.len, html }) catch {};
+        if (std.mem.startsWith(u8, first_line, "GET /api/logs?id=")) {
+            const query = first_line["GET /api/logs?id=".len..];
+            const end = std.mem.indexOfScalar(u8, query, ' ') orelse query.len;
+            const query_str = query[0..end];
+            // Parse id and optional lines param
+            var target_id = query_str;
+            var tail_lines: usize = 100;
+            if (std.mem.indexOf(u8, query_str, "&lines=")) |amp| {
+                target_id = query_str[0..amp];
+                const lines_str = query_str[amp + 7 ..];
+                tail_lines = std.fmt.parseInt(usize, lines_str, 10) catch 100;
+            }
+            state.mutex.lock();
+            const process = state.findProcess(target_id);
+            const log_data = if (process) |p| readLogSlice(allocator, p.log_path, tail_lines, 0) catch allocator.dupe(u8, "") catch "" else "";
+            state.mutex.unlock();
+            const log_json = std.json.stringifyAlloc(allocator, log_data, .{}) catch "\"\"";
+            defer allocator.free(log_json);
+            defer if (@TypeOf(log_data) == []u8) allocator.free(log_data);
+            const resp = std.fmt.allocPrint(allocator, "{{\"log\":{s}}}", .{log_json}) catch "{\"log\":\"\"}";
+            defer if (@TypeOf(resp) == []u8) allocator.free(resp);
+            httpJsonResponse(&stream, "200 OK", resp);
+            continue;
+        }
+        if (std.mem.startsWith(u8, first_line, "POST /api/action")) {
+            const body = extractHttpBody(request_buf);
+            const trimmed = std.mem.trim(u8, body, " \r\n\t");
+            if (trimmed.len == 0) {
+                httpJsonResponse(&stream, "400 Bad Request", "{\"success\":false,\"error\":\"empty body\"}");
+                continue;
+            }
+
+            const parsed = std.json.parseFromSlice(std.json.Value, allocator, trimmed, .{ .allocate = .alloc_always }) catch {
+                httpJsonResponse(&stream, "400 Bad Request", "{\"success\":false,\"error\":\"invalid json\"}");
+                continue;
+            };
+            defer parsed.deinit();
+
+            const action = protocol.payloadString(parsed.value, "action") orelse {
+                httpJsonResponse(&stream, "400 Bad Request", "{\"success\":false,\"error\":\"missing action\"}");
+                continue;
+            };
+
+            const allowed =
+                std.mem.eql(u8, action, "start") or
+                std.mem.eql(u8, action, "stop") or
+                std.mem.eql(u8, action, "restart") or
+                std.mem.eql(u8, action, "reload") or
+                std.mem.eql(u8, action, "delete") or
+                std.mem.eql(u8, action, "flush") or
+                std.mem.eql(u8, action, "reset") or
+                std.mem.eql(u8, action, "scale") or
+                std.mem.eql(u8, action, "signal") or
+                std.mem.eql(u8, action, "save") or
+                std.mem.eql(u8, action, "resurrect");
+            if (!allowed) {
+                httpJsonResponse(&stream, "403 Forbidden", "{\"success\":false,\"error\":\"action not allowed\"}");
+                continue;
+            }
+
+            const fake_request = protocol.Request{
+                .authToken = state.token,
+                .action = action,
+                .requestId = "dashboard",
+                .payload = parsed.value,
+            };
+            const response = handleControlRequest(state, allocator, fake_request) catch {
+                httpJsonResponse(&stream, "500 Internal Server Error", "{\"success\":false,\"error\":\"internal error\"}");
+                continue;
+            };
+            defer allocator.free(response);
+            httpJsonResponse(&stream, "200 OK", response);
+            continue;
+        }
+        const html = std.fs.cwd().readFileAlloc(allocator, index_path, 512 * 1024) catch "<h1>buncore dashboard unavailable</h1>";
+        defer if (@TypeOf(html) == []u8) allocator.free(html);
+        httpHtmlResponse(&stream, html);
     }
 }
 
