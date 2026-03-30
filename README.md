@@ -40,26 +40,70 @@ buncore delete api
 
 ## Feature Comparison with PM2
 
-| Feature | buncore | PM2 | Notes |
-|---------|----------|-----|-------|
-| **Core Process Management** | ✅ | ✅ | Start/stop/restart/delete |
-| **Load Balancing** | ✅ Cluster mode with SO_REUSEPORT | ✅ Cluster mode | buncore uses modern OS-level load balancing |
-| **Hot Reload** | ✅ Zero-downtime graceful reload | ✅ Graceful reload | |
-| **Auto-restart** | ✅ With exponential backoff | ✅ | buncore has smarter backoff strategy |
-| **Log Management** | ✅ Separate stdout/stderr + rotation | ✅ | |
-| **Ecosystem Config** | ✅ JS/JSON support | ✅ | Compatible format |
-| **Environment Management** | ✅ Named env switching | ✅ | |
-| **Startup Scripts** | ✅ systemd/launchd generation | ✅ | |
-| **Monitoring** | ✅ Real-time metrics | ✅ | Built-in web dashboard |
-| **Memory Management** | ✅ Auto-restart on memory limit | ✅ | |
-| **Cron Jobs** | ✅ Built-in cron restart | ❌ | |
-| **Container Support** | ✅ `--no-daemon` mode | ❌ | Better for Docker/K8s |
-| **Signal Handling** | ✅ Custom signal sending | ✅ | |
-| **Runtime Scaling** | ✅ `buncore scale app 8` | ✅ | |
-| **TypeScript Native** | ✅ Built for Bun/Deno | ⚠️ Requires transpilation | buncore runs TS directly |
-| **Modern Runtime** | ✅ Zig + Node.js | ⚠️ Node.js only | Better performance |
-| **JSON API** | ✅ `--json` output | ✅ | |
-| **Web Dashboard** | ✅ Built-in | ✅ PM2 Plus (separate) | |
+Both **buncore** and **PM2** solve the same core problem: keeping application processes alive, observable, and easy to operate in production.
+
+The difference is in emphasis:
+- **PM2** is the long-established, general-purpose Node.js process manager.
+- **buncore** is a more modern, **Bun-first** control plane with a **Zig daemon**, built-in diagnostics, and a richer built-in local dashboard workflow.
+
+> Legend: **✅ built-in** · **⚠️ supported with caveats / different workflow**
+
+### Lifecycle & orchestration
+
+| Capability | buncore | PM2 | Notes |
+|-----------|---------|-----|-------|
+| Start / stop / restart / delete | ✅ | ✅ | Core lifecycle management is covered by both |
+| Zero-downtime reload | ✅ | ✅ | Graceful reload for production updates |
+| Runtime scaling | ✅ `buncore scale api 8` | ✅ | Horizontal scaling at runtime |
+| Watch mode / file-based restart | ✅ | ✅ | Useful in development and iterative staging workflows |
+| Custom signal handling | ✅ | ✅ | Send `SIGTERM`, `SIGUSR1`, `SIGUSR2`, etc. |
+| Auto-restart on crashes | ✅ | ✅ | Unexpected exits can be recovered automatically |
+| Exponential backoff restart | ✅ | ✅ | Helps avoid tight crash loops under failure |
+| Memory limit restart | ✅ | ✅ | Guardrail for long-running services |
+| Cron-based restart | ✅ | ✅ | Useful for scheduled recycling / housekeeping |
+| Save & resurrect process list | ✅ | ✅ | Persist and restore managed fleets |
+| Startup integration | ✅ systemd / launchd | ✅ | Boot-time process restoration |
+
+### Observability & diagnostics
+
+| Capability | buncore | PM2 | Notes |
+|-----------|---------|-----|-------|
+| Process list / status overview | ✅ | ✅ | Fast fleet-level visibility |
+| Detailed process inspection | ✅ | ✅ | Runtime, uptime, memory, restart history |
+| Log streaming & tailing | ✅ | ✅ | Per-process log inspection |
+| Separate stdout / stderr logs | ✅ | ✅ | Cleaner troubleshooting in production |
+| Log rotation support | ✅ | ✅ | Prevents unbounded log growth |
+| Real-time metrics | ✅ | ✅ | CPU / memory monitoring workflows |
+| Built-in web dashboard | ✅ local dashboard included | ⚠️ richer web UI usually via PM2 Plus / separate tooling | buncore ships with a local browser-based control room |
+| Heap snapshots | ✅ built-in command flow | ⚠️ usually external tooling / inspector workflow | Useful for memory leak analysis |
+| CPU profiling | ✅ built-in command flow | ⚠️ usually external tooling / inspector workflow | Helpful for performance investigations |
+| JSON-friendly outputs / API style | ✅ | ✅ | Better scripting and automation support |
+
+### Runtime & platform fit
+
+| Capability | buncore | PM2 | Notes |
+|-----------|---------|-----|-------|
+| Bun-first workflow | ✅ | ⚠️ possible via interpreter, but not Bun-native | buncore is designed around Bun-centric usage |
+| TypeScript execution experience | ✅ strong native Bun workflow | ⚠️ commonly ts-node / transpile-based setups | Less ceremony for TS-first apps |
+| Cluster load balancing | ✅ SO_REUSEPORT-based clustering | ✅ cluster mode | Different implementation strategy, same goal |
+| Container / foreground mode | ✅ `--no-daemon` | ✅ via `pm2-runtime` | Both can fit container workflows |
+| Ecosystem config support | ✅ JS / JSON ecosystem support | ✅ | Familiar deployment model |
+| Control-plane implementation | ✅ Zig daemon | ✅ Node.js daemon | buncore emphasizes a lean native daemon |
+
+### Where buncore stands out
+
+- **Bun-first ergonomics** for teams that want a process manager aligned with modern Bun workflows.
+- **Built-in local web dashboard** instead of pushing advanced browser-based visibility into a separate product tier.
+- **Built-in heap snapshot and CPU profiling flows** for deeper diagnostics from the same toolchain.
+- **Zig-based daemon architecture** focused on low overhead and a modern systems-level control plane.
+
+### Where PM2 is still strong
+
+- **Mature ecosystem and mindshare** across traditional Node.js deployments.
+- **Longer operational history** in teams already standardized on Node-first infrastructure.
+- **Large amount of community documentation** and established workflows.
+
+In short: if you want a battle-tested general-purpose Node.js manager, PM2 is still the familiar baseline. If you want a more modern **Bun-oriented** experience with built-in diagnostics and a stronger local control surface, **buncore** is the more opinionated choice.
 
 ## Advanced Features
 
@@ -132,10 +176,11 @@ module.exports = {
 ## Web Dashboard
 
 ```bash
-# Start built-in monitoring dashboard
-buncore web
-# Open http://localhost:9615
+# Print the dashboard URL and monitoring endpoints
+buncore dashboard
 ```
+
+buncore prints the exact local dashboard URL for the running daemon. The dashboard port is chosen automatically, starting from `9716`.
 
 ## Commands
 
@@ -151,7 +196,7 @@ buncore web
 - `buncore list` - List all processes
 - `buncore info <name|id>` - Detailed process information
 - `buncore logs <name|id>` - Show logs
-- `buncore web` - Web-based monitoring dashboard
+- `buncore dashboard` - Print the web dashboard URL and monitoring API endpoints
 
 ### Scaling & Management
 - `buncore scale <name> <number>` - Scale instances
