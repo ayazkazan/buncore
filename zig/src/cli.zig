@@ -43,24 +43,92 @@ fn writeHero(writer: anytype, title: []const u8, subtitle: []const u8) !void {
     try render.writeDblBoxBottom(writer, width);
 }
 
+const BRAND_AQUA = "1;38;2;99;215;255";
+const BRAND_SKY = "1;38;2;119;187;255";
+const BRAND_ICE = "1;38;2;171;230;255";
+const BRAND_MINT = "1;38;2;120;243;197";
+const BRAND_SLATE = "1;38;2;126;157;201";
+
+const LogoSegment = struct {
+    color: []const u8,
+    text: []const u8,
+};
+
+fn writeLogoLine(writer: anytype, segments: []const LogoSegment) !void {
+    try writer.writeAll("  ");
+    for (segments) |segment| {
+        try render.writeColored(writer, segment.color, segment.text);
+    }
+    try writer.writeByte('\n');
+}
+
 fn writeBrandLogo(writer: anytype) !void {
-    const lines = [_]struct { color: []const u8, text: []const u8 }{
-        .{ .color = render.BOLD_CYAN, .text = "██████╗ ██╗   ██╗███╗   ██╗ ██████╗ ██████╗ ██████╗ ███████╗" },
-        .{ .color = render.CYAN, .text = "██╔══██╗██║   ██║████╗  ██║██╔════╝██╔═══██╗██╔══██╗██╔════╝" },
-        .{ .color = render.BOLD_WHITE, .text = "██████╔╝██║   ██║██╔██╗ ██║██║     ██║   ██║██████╔╝█████╗  " },
-        .{ .color = render.BOLD_BLUE, .text = "██╔══██╗██║   ██║██║╚██╗██║██║     ██║   ██║██╔══██╗██╔══╝  " },
-        .{ .color = render.BOLD_CYAN, .text = "██████╔╝╚██████╔╝██║ ╚████║╚██████╗╚██████╔╝██║  ██║███████╗" },
-        .{ .color = render.SLATE, .text = "╚═════╝  ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝" },
+    const line1 = [_]LogoSegment{
+        .{ .color = BRAND_AQUA, .text = "██████╗ ██╗   ██╗" },
+        .{ .color = BRAND_SKY, .text = "███╗   ██╗ " },
+        .{ .color = BRAND_ICE, .text = "██████╗ ██████╗ " },
+        .{ .color = BRAND_MINT, .text = "██████╗ ███████╗" },
+    };
+    const line2 = [_]LogoSegment{
+        .{ .color = BRAND_AQUA, .text = "██╔══██╗██║   ██║" },
+        .{ .color = BRAND_SKY, .text = "████╗  ██║" },
+        .{ .color = BRAND_ICE, .text = "██╔════╝██╔═══██╗" },
+        .{ .color = BRAND_SLATE, .text = "██╔══██╗██╔════╝" },
+    };
+    const line3 = [_]LogoSegment{
+        .{ .color = BRAND_AQUA, .text = "██████╔╝██║   ██║" },
+        .{ .color = BRAND_SKY, .text = "██╔██╗ ██║" },
+        .{ .color = BRAND_ICE, .text = "██║     ██║   ██║" },
+        .{ .color = BRAND_MINT, .text = "██████╔╝█████╗  " },
+    };
+    const line4 = [_]LogoSegment{
+        .{ .color = BRAND_SKY, .text = "██╔══██╗██║   ██║" },
+        .{ .color = BRAND_SLATE, .text = "██║╚██╗██║" },
+        .{ .color = BRAND_ICE, .text = "██║     ██║   ██║" },
+        .{ .color = BRAND_SLATE, .text = "██╔══██╗██╔══╝  " },
+    };
+    const line5 = [_]LogoSegment{
+        .{ .color = BRAND_AQUA, .text = "██████╔╝╚██████╔╝" },
+        .{ .color = BRAND_SKY, .text = "██║ ╚████║" },
+        .{ .color = BRAND_ICE, .text = "╚██████╗╚██████╔╝" },
+        .{ .color = BRAND_MINT, .text = "██║  ██║███████╗" },
+    };
+    const line6 = [_]LogoSegment{
+        .{ .color = BRAND_SLATE, .text = "╚═════╝  ╚═════╝ " },
+        .{ .color = BRAND_SLATE, .text = "╚═╝  ╚═══╝ " },
+        .{ .color = BRAND_SLATE, .text = "╚═════╝ ╚═════╝ " },
+        .{ .color = BRAND_SLATE, .text = "╚═╝  ╚═╝╚══════╝" },
     };
 
-    for (lines) |line| {
-        try writer.writeAll("  ");
-        try render.writeColored(writer, line.color, line.text);
-        try writer.writeByte('\n');
-    }
+    try writeLogoLine(writer, &line1);
+    try writeLogoLine(writer, &line2);
+    try writeLogoLine(writer, &line3);
+    try writeLogoLine(writer, &line4);
+    try writeLogoLine(writer, &line5);
+    try writeLogoLine(writer, &line6);
+
     try writer.writeAll("  ");
-    try render.writeMuted(writer, "modern bun process manager • zig control plane");
+    try render.writeColored(writer, BRAND_AQUA, "bun-native");
+    try render.writeMuted(writer, " • ");
+    try render.writeColored(writer, BRAND_ICE, "dashboard-first");
+    try render.writeMuted(writer, " • ");
+    try render.writeColored(writer, BRAND_MINT, "diagnostics built in");
     try writer.writeByte('\n');
+}
+
+fn writeBrandRibbon(writer: anytype, context: []const u8) !void {
+    try writer.writeAll("  ");
+    try render.writeColored(writer, BRAND_AQUA, "▸▸ ");
+    try render.writeColored(writer, BRAND_ICE, "BUNCORE");
+    try render.writeMuted(writer, " // ");
+    try render.writeColored(writer, BRAND_MINT, context);
+    try writer.writeByte('\n');
+}
+
+fn writeBrandedHero(writer: anytype, title: []const u8, subtitle: []const u8) !void {
+    try writeBrandLogo(writer);
+    try writer.writeByte('\n');
+    try writeHero(writer, title, subtitle);
 }
 
 fn writeSectionTitle(writer: anytype, title: []const u8) !void {
@@ -79,9 +147,7 @@ fn writeCommandEntry(writer: anytype, syntax: []const u8, description: []const u
 }
 
 fn writeHelp(writer: anytype) !void {
-    try writeBrandLogo(writer);
-    try writer.writeByte('\n');
-    try writeHero(writer, "BUNCORE CONTROL SURFACE", "Independent Zig process manager for Bun workloads");
+    try writeBrandedHero(writer, "BUNCORE CONTROL SURFACE", "Independent Zig process manager for Bun workloads");
     try writer.writeByte('\n');
     try render.writePill(writer, render.BOLD_GREEN, "Launch");
     try writer.writeByte(' ');
@@ -548,9 +614,10 @@ fn writeProcessTableRow(allocator: Allocator, writer: anytype, item: std.json.Va
 fn printEmptyFleet(mode: TableMode) !void {
     const out = stdoutWriter();
     if (mode == .monitor) {
+        try writeBrandRibbon(out, "live monitor");
         try writeHero(out, "BUNCORE LIVE MONITOR", "Terminal fleet view with per-second refresh");
     } else {
-        try writeHero(out, "BUNCORE FLEET SNAPSHOT", "Process inventory and runtime pressure overview");
+        try writeBrandedHero(out, "BUNCORE FLEET SNAPSHOT", "Process inventory and runtime pressure overview");
     }
     try out.writeByte('\n');
     try render.writeWarning(out, "No processes are being managed right now.");
@@ -560,9 +627,10 @@ fn printEmptyFleet(mode: TableMode) !void {
 fn printFleetSummary(allocator: Allocator, processes: []const std.json.Value, mode: TableMode) !void {
     const out = stdoutWriter();
     if (mode == .monitor) {
+        try writeBrandRibbon(out, "live monitor");
         try writeHero(out, "BUNCORE LIVE MONITOR", "Terminal fleet view with per-second refresh");
     } else {
-        try writeHero(out, "BUNCORE FLEET SNAPSHOT", "Process inventory and runtime pressure overview");
+        try writeBrandedHero(out, "BUNCORE FLEET SNAPSHOT", "Process inventory and runtime pressure overview");
     }
     try out.writeByte('\n');
 
@@ -717,7 +785,7 @@ fn printInfo(allocator: Allocator, response: Response) !void {
     } else null, "N/A");
     defer allocator.free(jsc_object_count_text);
 
-    try writeHero(out, "BUNCORE PROCESS PROFILE", hero_name);
+    try writeBrandedHero(out, "BUNCORE PROCESS PROFILE", hero_name);
     try out.writeByte('\n');
 
     const status_pill = try std.fmt.allocPrint(allocator, "Status {s}", .{status});
@@ -770,7 +838,7 @@ fn printJsonValue(value: std.json.Value) !void {
 
 fn printJsonPanel(title: []const u8, subtitle: []const u8, value: std.json.Value) !void {
     const out = stdoutWriter();
-    try writeHero(out, title, subtitle);
+    try writeBrandedHero(out, title, subtitle);
     try out.writeByte('\n');
     try printJsonValue(value);
 }
@@ -788,7 +856,7 @@ fn printActionResult(command: []const u8, target: []const u8, response: Response
 
 fn printLogsHeader(allocator: Allocator, target: []const u8, lines: []const u8, follow: bool, path: []const u8) !void {
     const out = stdoutWriter();
-    try writeHero(out, "BUNCORE LOG STREAM", "Structured stdout and stderr tail for managed processes");
+    try writeBrandedHero(out, "BUNCORE LOG STREAM", "Structured stdout and stderr tail for managed processes");
     try out.writeByte('\n');
 
     const target_pill = try std.fmt.allocPrint(allocator, "Target {s}", .{target});
@@ -1130,9 +1198,7 @@ fn printDashboardInfo(allocator: Allocator, host: []const u8, dashboard_port: u1
     const api_url = try std.fmt.allocPrint(allocator, "{s}/api/processes", .{url});
     defer allocator.free(api_url);
 
-    try writeBrandLogo(out);
-    try out.writeByte('\n');
-    try writeHero(out, "BUNCORE DASHBOARD READY", "Open the web control room for live fleet visibility");
+    try writeBrandedHero(out, "BUNCORE DASHBOARD READY", "Open the web control room for live fleet visibility");
     try out.writeByte('\n');
     try render.writePill(out, render.BOLD_CYAN, "Dashboard URL");
     try out.writeByte(' ');
